@@ -4,7 +4,7 @@ import java.util.ArrayList;
 
 public class ExplosionController extends Thread
 {
-	ArrayList<Dirt> dirt = new ArrayList<Dirt>();
+	ArrayList<ArrayList<Dirt>> explosions = new ArrayList<ArrayList<Dirt>>();
 	Terrain t;
 
 	static float DIRT_SIZE = .2f;
@@ -35,6 +35,7 @@ public class ExplosionController extends Thread
 		test.width = 1;
 		test.height = 1;
 		t.registerDrawable(test);
+		
 		
 		int min_index = (int) ((x - r) / t.segmentWidth) + 1;
 		int max_index = (int) ((x + r) / t.segmentWidth);
@@ -84,22 +85,31 @@ public class ExplosionController extends Thread
 	
 	private void _generateDirtpoints(float minX, float maxX, float x, float y, float r)
 	{
-
+		ArrayList<Dirt> dirt = new ArrayList<Dirt>();
+		
 		float explosion_width = Math.abs(maxX - minX);
 		int num_dirt_columns = (int)(1 + explosion_width/(2*DIRT_SIZE) );
 		float gap = explosion_width%(2*DIRT_SIZE) / (num_dirt_columns-1);
-		
+		float totalDirtVolume = 0;
 		for (float col_x = minX; col_x <= maxX+.0001; col_x += DIRT_SIZE*2+gap) 
 		{
 			if(col_x > maxX)
 			{
 				col_x = maxX;
 			}
-			_generateDirtColumn(col_x, x, y, r, gap);
+			totalDirtVolume += _generateDirtColumn(col_x, x, y, r, gap, dirt);
 		}
+		
+		float individualDirtVolume = totalDirtVolume / dirt.size();
+		for(int d = 0; d < dirt.size(); d++)
+		{
+			dirt.get(d).volume = individualDirtVolume;
+		}
+		
+		explosions.add(dirt);
 	}
 	
-	private void _generateDirtColumn(float col_x, float x, float y, float r, float gap)
+	private float _generateDirtColumn(float col_x, float x, float y, float r, float gap, ArrayList<Dirt> dirt)
 	{
 		float offset = (float) Math.sqrt(r*r - Math.pow(col_x - x, 2));
 		float tCircleY = (float) (offset + y);
@@ -124,18 +134,24 @@ public class ExplosionController extends Thread
 				d += DIRT_SIZE*2+gap;
 			}
 		}
+		
+		return top-tCircleY;
 	}
 	
 	public void run()
 	{
-		while(!dirt.isEmpty())
+		while(!explosions.isEmpty())
 		{
-			for(int i = 0; i < dirt.size(); i++)
+			for(int e = 0; e < explosions.size(); e++)
 			{
-				Dirt d = dirt.get(i);
-				d.vy += -.01;
-				d.x += d.vx;
-				d.y += d.vy;
+				ArrayList<Dirt> dirt = explosions.get(e);
+				for(int i = 0; i < dirt.size(); i++)
+				{
+					Dirt d = dirt.get(i);
+					d.vy += -.01;
+					d.x += d.vx;
+					d.y += d.vy;
+				}
 			}
 			
 			try
@@ -143,7 +159,6 @@ public class ExplosionController extends Thread
 				Thread.currentThread().sleep(15);
 			} catch (InterruptedException e)
 			{
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}

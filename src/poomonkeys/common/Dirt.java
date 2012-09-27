@@ -4,6 +4,7 @@ import javax.media.opengl.GL2;
 public class Dirt extends Drawable
 {
 	float vx, vy;
+	public float volume;
 
 	public void buildGeometry(float viewWidth, float viewHeight)
 	{
