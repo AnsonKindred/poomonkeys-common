@@ -6,7 +6,7 @@ public class ExplosionController
 {
 	static ArrayList<Dirt> dirt = new ArrayList<Dirt>();
 
-	static float DIRT_SIZE = .3f;
+	static float DIRT_SIZE = .2f;
 	
 	public static void explode(Terrain t, float x, float y, float r, Renderer renderer)
 	{
@@ -41,11 +41,15 @@ public class ExplosionController
 		float explosion_width = Math.abs(maxViewX - minViewX);
 		float w = viewWidth/(t.NUM_POINTS-1);
 		
-		int num_dirt_columns = 1 + (int)( explosion_width/(2*DIRT_SIZE) );
-		float gap = explosion_width%(2*DIRT_SIZE) / (num_dirt_columns);
+		int num_dirt_columns = (int)(1 + explosion_width/(2*DIRT_SIZE) );
+		float gap = explosion_width%(2*DIRT_SIZE) / (num_dirt_columns-1);
 		
-		for (float dirt_x = minViewX; dirt_x <= maxViewX; dirt_x += DIRT_SIZE*2+gap) 
+		for (float dirt_x = minViewX; dirt_x <= maxViewX+.00001; dirt_x += DIRT_SIZE*2+gap) 
 		{
+			if(dirt_x > maxViewX)
+			{
+				dirt_x = maxViewX;
+			}
 			float offset = (float) Math.sqrt(r*r - Math.pow(dirt_x - x, 2));
 			float tCircleY = (float) (offset + y);
 			int iFromX = (int) ((t.NUM_POINTS-1)*(dirt_x+viewWidth/2)/viewWidth);
@@ -66,7 +70,7 @@ public class ExplosionController
 					dirtPoint.height = DIRT_SIZE*2;
 					dirt.add(dirtPoint);
 					renderer.registerDrawable(dirtPoint);
-					j += DIRT_SIZE;
+					j += DIRT_SIZE*2+gap;
 				}
 			}
 		}
