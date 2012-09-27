@@ -39,6 +39,11 @@ public class Drawable
     	drawables.add(d);
     }
 	
+	public void unregisterDrawable(Drawable d)
+	{
+		drawables.remove(d);
+	}
+	
 	public void buildGeometry(float viewWidth, float viewHeight)
 	{
 		
