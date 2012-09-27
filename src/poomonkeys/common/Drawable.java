@@ -130,8 +130,6 @@ public class Drawable
 		didInit = true;
 	}
 	
-	public void update(Renderer renderer) {}
-	
 	public void dispose()
 	{
 		for(int i=0; i < drawables.size(); i++) drawables.get(i).dispose();
