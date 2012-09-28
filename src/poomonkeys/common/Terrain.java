@@ -5,7 +5,7 @@ import javax.media.opengl.GL2;
 public class Terrain extends Drawable
 {
 
-	int NUM_POINTS = 64;
+	int NUM_POINTS = 512;
 	float segmentWidth;
 	float points[] = new float[NUM_POINTS];
 

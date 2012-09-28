@@ -7,7 +7,7 @@ public class ExplosionController extends Thread
 	ArrayList<ArrayList<Dirt>> explosions = new ArrayList<ArrayList<Dirt>>();
 	Terrain t;
 
-	static float DIRT_SIZE = .5f;
+	static float DIRT_SIZE = .2f;
 
 	static ExplosionController instance = null;
 
@@ -52,10 +52,7 @@ public class ExplosionController extends Thread
 		// The actual x value at the min and max indexes
 		float minX = min_index * t.segmentWidth;
 		float maxX = max_index * t.segmentWidth;
-		System.out.println("min_index "+min_index);
-		System.out.println("max_index "+max_index);
-		System.out.println("minX "+minX);
-		System.out.println("maxX "+maxX);
+		
 		ArrayList<Dirt> dirt;
 		float totalDirtVolume = 0;
 
@@ -95,7 +92,6 @@ public class ExplosionController extends Thread
 
 			// checks if the land is above the bottom of the circle, otherwise
 			// don't mess with it.
-
 			if (t.points[i] > bCircleY)
 			{
 				if (t.points[i] > tCircleY)
@@ -117,16 +113,11 @@ public class ExplosionController extends Thread
 		ArrayList<Dirt> dirt = new ArrayList<Dirt>();
 
 		float explosion_width = Math.abs(maxX - minX);
-		System.out.println("Explosion width " + explosion_width);
 		int num_dirt_columns = (int) ((explosion_width + t.segmentWidth) / (2 * DIRT_SIZE));
-		System.out.println("Dirt columns " + num_dirt_columns);
 		float gapTotal = (explosion_width + t.segmentWidth) % (2 * DIRT_SIZE);
-		System.out.println("gap total " + gapTotal);
 		float gap = gapTotal / num_dirt_columns;
-		System.out.println("gap " + gap);
-		System.out.println();
-		float col_x = minX - t.segmentWidth/2 + gap/2 + DIRT_SIZE;
-		float end_x = maxX + t.segmentWidth/2 - gap/2 - DIRT_SIZE;
+		float col_x = minX - t.segmentWidth/2 + DIRT_SIZE + gap/2;
+		float end_x = maxX + t.segmentWidth/2 - DIRT_SIZE - gap/2;
 		float EPSILON = .0001f;
 		for (; col_x <= end_x + EPSILON; col_x += DIRT_SIZE * 2 + gap)
 		{
@@ -164,8 +155,8 @@ public class ExplosionController extends Thread
 				Dirt dirtPoint = new Dirt();
 				dirtPoint.x = col_x;
 				dirtPoint.y = tCircleY + d;
-				dirtPoint.width = DIRT_SIZE * 2;
-				dirtPoint.height = DIRT_SIZE * 2;
+				dirtPoint.width = DIRT_SIZE * 2 + gap;
+				dirtPoint.height = DIRT_SIZE * 2 + gap;
 				dirt.add(dirtPoint);
 				t.registerDrawable(dirtPoint);
 				d += DIRT_SIZE * 2 + gap;
@@ -195,15 +186,27 @@ public class ExplosionController extends Thread
 					int iFromX = (int) (d.x / t.segmentWidth);
 					double percent = 1 - (d.x % t.segmentWidth) / t.segmentWidth;
 					double landYatX = t.points[iFromX] + (t.points[iFromX + 1] - t.points[iFromX]) * percent;
+					
 					if (d.y < landYatX)
 					{
-						if (t.points[iFromX + 1] < t.points[iFromX])
+						int firstIndex = Math.round((d.x - d.width/2) / t.segmentWidth);
+						int lastIndex = Math.round((d.x + d.width/2) / t.segmentWidth);
+						
+						if(firstIndex == lastIndex)
 						{
-							t.points[iFromX + 1] += d.volume;
-						} else
-						{
-							t.points[iFromX] += d.volume;
+							t.points[firstIndex] += d.volume;
 						}
+						else
+						{
+							for(int j = firstIndex; j <= lastIndex; j++)
+							{
+								float amount_outside = (float) (Math.max(d.x+d.width/2 - (j+.5)*t.segmentWidth, 0) + Math.max((j-.5)*t.segmentWidth-d.x+d.width/2, 0));
+								float percent_outside = amount_outside / (d.width);
+								float percent_overlap = 1 - percent_outside;
+								t.points[j] += d.volume * percent_overlap;
+							}
+						}
+						
 						t.unregisterDrawable(d);
 						dirt.remove(i);
 						i--;
@@ -216,7 +219,7 @@ public class ExplosionController extends Thread
 			t.finalizeGeometry();
 			try
 			{
-				Thread.currentThread().sleep(159999);
+				Thread.currentThread().sleep(15);
 			} catch (InterruptedException e)
 			{
 				e.printStackTrace();
