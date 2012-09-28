@@ -27,7 +27,8 @@ public class TerrainGenerator
 		
 		float y = midY + (r.nextFloat() * 2 * depthFactor - depthFactor)*t.height;
 		
-		y = Math.max(Math.min(t.height, y), 0); // Make sure y is between 0 and height
+		// Make sure y is between 0 and height
+		y = Math.max(Math.min(t.height, y), 0); 
 		
 		t.points[midPoint] = y;
 		
