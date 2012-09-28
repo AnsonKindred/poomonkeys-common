@@ -6,7 +6,7 @@ public class ExplosionController extends Thread {
 	ArrayList<ArrayList<Dirt>> explosions = new ArrayList<ArrayList<Dirt>>();
 	Terrain t;
 
-	static float DIRT_SIZE = .2f;
+	static float DIRT_SIZE = .5f;
 
 	static ExplosionController instance = null;
 
@@ -31,6 +31,7 @@ public class ExplosionController extends Thread {
 		test.height = 1;
 		t.registerDrawable(test);
 
+		// The min and max terrain index that lies within the explosion radius
 		int min_index = (int) ((x - r) / t.segmentWidth) + 1;
 		int max_index = (int) ((x + r) / t.segmentWidth);
 
@@ -41,68 +42,86 @@ public class ExplosionController extends Thread {
 			min_index = 0;
 		}
 
-		float minX = (min_index / (t.NUM_POINTS - 1.f)) * t.width;
-		float maxX = (max_index / (t.NUM_POINTS - 1.f)) * t.width;
+		// The actual x value at the min and max indexes
+		float minX = min_index * t.segmentWidth;
+		float maxX = max_index * t.segmentWidth;
 
-		_generateDirtpoints(minX, maxX, x, y, r);
-		_collapseTerrain(min_index, max_index, x, y, r);
-
-		if (!this.isAlive()) {
-			this.start();
-		}
-	}
-
-	private void _collapseTerrain(int min_index, int max_index, float x,
-			float y, float r) {
-		// Sets the terrain heights to the bottom of the explosion circle
-		for (int i = min_index; i <= max_index; i++) {
-			float xFromI = i * t.segmentWidth;
-			float offset = (float) Math.sqrt(r * r - Math.pow(xFromI - x, 2));
-			float bCircleY = (float) (y - offset);
-
-			// checks if the land is above the bottom of the circle, otherwise
-			// don't mess with it.
-			if (t.points[i] > bCircleY) {
-				t.points[i] = bCircleY;
-			}
-		}
-		t.buildGeometry(t.width, t.height);
-		t.finalizeGeometry();
-	}
-
-	private void _generateDirtpoints(float minX, float maxX, float x, float y,
-			float r) {
-		ArrayList<Dirt> dirt = new ArrayList<Dirt>();
-
-		float explosion_width = Math.abs(maxX - minX);
-		int num_dirt_columns = (int) ((explosion_width + 2 * t.segmentWidth) / (2 * DIRT_SIZE));
-		float totalGap = explosion_width + 2 * t.segmentWidth
-				- num_dirt_columns * 2 * DIRT_SIZE;
-		float gap = totalGap / num_dirt_columns;
+		ArrayList<Dirt> dirt;
 		float totalDirtVolume = 0;
-		for (float col_x = minX; col_x <= maxX + .0001; col_x += DIRT_SIZE * 2
-				+ gap) {
-			if (col_x > maxX) {
-				col_x = maxX;
-			}
-			totalDirtVolume += _generateDirtColumn(col_x, x, y, r, gap, dirt);
-		}
 
+		dirt = _generateDirtpoints(minX, maxX, x, y, r);
+		totalDirtVolume = _collapseTerrain(min_index, max_index, x, y, r);
+
+		// Assign a portion of the removed dirt volume to each dirt point
 		float individualDirtVolume = totalDirtVolume / dirt.size();
 		for (int d = 0; d < dirt.size(); d++) {
 			dirt.get(d).volume = individualDirtVolume;
 		}
 
+		// Add the dirt point list as a new explosion to be animated
 		explosions.add(dirt);
+
+		// Start the animation process if it isn't running
+		if (!this.isAlive()) {
+			this.start();
+		}
+	}
+
+	/*
+	 * Sets terrain heights to the bottom of the explosion circle
+	 */
+	private float _collapseTerrain(int min_index, int max_index, float x,
+			float y, float r) {
+		float dirtVolume = 0;
+
+		for (int i = min_index; i <= max_index; i++) {
+			float xFromI = i * t.segmentWidth;
+			float offset = (float) Math.sqrt(r * r - Math.pow(xFromI - x, 2));
+			float tCircleY = (float) (offset + y);
+			float bCircleY = (float) (y - offset);
+
+			// checks if the land is above the bottom of the circle, otherwise
+			// don't mess with it.
+
+			if (t.points[i] > bCircleY) {
+				if (t.points[i] > tCircleY) {
+					dirtVolume += t.points[i] - tCircleY;
+				}
+
+				t.points[i] = bCircleY;
+			}
+		}
+		t.buildGeometry(t.width, t.height);
+		t.finalizeGeometry();
+
+		return dirtVolume;
+	}
+
+	private ArrayList<Dirt> _generateDirtpoints(float minX, float maxX,
+			float x, float y, float r) {
+		ArrayList<Dirt> dirt = new ArrayList<Dirt>();
+
+		float explosion_width = Math.abs(maxX - minX);
+		int num_dirt_columns = (int) ((explosion_width + t.segmentWidth) / (2 * DIRT_SIZE));
+		float gapTotal = (explosion_width + t.segmentWidth) % (2 * DIRT_SIZE);
+		float gap = gapTotal / num_dirt_columns;
+		for (float col_x = minX - t.segmentWidth / 2; col_x <= maxX + t.segmentWidth / 2 + gap / 2; col_x += DIRT_SIZE
+				* 2 + gap) {
+
+			_generateDirtColumn(col_x, x, y, r, gap, dirt);
+		}
+
+		return dirt;
 	}
 
 	private float _generateDirtColumn(float col_x, float x, float y, float r,
 			float gap, ArrayList<Dirt> dirt) {
 		float offset = (float) Math.sqrt(r * r - Math.pow(col_x - x, 2));
 		float tCircleY = (float) (offset + y);
-		int iFromX = (int) ((t.NUM_POINTS - 1) * col_x / t.width);
 
-		float xPercent = (col_x - iFromX * t.segmentWidth) / t.segmentWidth;
+		int iFromX = (int) (col_x / t.segmentWidth);
+
+		float xPercent = (col_x % t.segmentWidth) / t.segmentWidth;
 		float p1y = t.points[iFromX];
 		float p2y = t.points[iFromX + 1];
 		float top = p1y + (p2y - p1y) * xPercent;
@@ -123,6 +142,9 @@ public class ExplosionController extends Thread {
 		return top - tCircleY;
 	}
 
+	/**
+	 * Animates the dirt points and handles adding them back to the terrain
+	 */
 	public void run() {
 		while (!explosions.isEmpty()) {
 			for (int e = 0; e < explosions.size(); e++) {
@@ -132,11 +154,31 @@ public class ExplosionController extends Thread {
 					d.vy += -.01;
 					d.x += d.vx;
 					d.y += d.vy;
+
+					int iFromX = (int) (d.x / t.segmentWidth);
+					double percent = 1 - (d.x % t.segmentWidth)
+							/ t.segmentWidth;
+					double landYatX = t.points[iFromX]
+							+ (t.points[iFromX + 1] - t.points[iFromX])
+							* percent;
+					if (d.y < landYatX) {
+						if (t.points[iFromX + 1] < t.points[iFromX]) {
+							t.points[iFromX + 1] += d.volume;
+						} else {
+							t.points[iFromX] += d.volume;
+						}
+						t.unregisterDrawable(d);
+						dirt.remove(i);
+						i--;
+						continue;
+					}
 				}
 			}
 
+			t.buildGeometry(t.width, t.height);
+			t.finalizeGeometry();
 			try {
-				Thread.currentThread().sleep(15);
+				Thread.currentThread().sleep(159999);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
