@@ -4,7 +4,7 @@ import java.util.Random;
 
 public class TerrainGenerator 
 {
-	static Random r = new Random(42565777L);
+	static Random r = new Random(4257896217L);
 
 	public static void generate(Terrain t) 
 	{

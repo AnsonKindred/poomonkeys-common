@@ -18,6 +18,7 @@ public class Terrain extends Drawable
 		baseGeometry = new float[NUM_POINTS*3];
 		for(int i = 0; i < NUM_POINTS; i++)
 		{
+			System.out.println(points[i]);
 			baseGeometry[i*3] = segmentWidth*i;;
 			baseGeometry[i*3+1] = points[i];
 			baseGeometry[i*3+2] = 0;
