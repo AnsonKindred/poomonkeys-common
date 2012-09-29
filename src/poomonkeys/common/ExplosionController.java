@@ -7,8 +7,7 @@ public class ExplosionController extends Thread
 	ArrayList<ArrayList<Dirt>> explosions = new ArrayList<ArrayList<Dirt>>();
 	Terrain t;
 
-	static float DIRT_SIZE = .2f;
-
+	static float DIRT_SIZE = .1f;
 	static ExplosionController instance = null;
 
 	public static ExplosionController getInstance()
@@ -155,6 +154,11 @@ public class ExplosionController extends Thread
 				Dirt dirtPoint = new Dirt();
 				dirtPoint.x = col_x;
 				dirtPoint.y = tCircleY + d;
+				float distance = (float) Math.sqrt(Math.pow(dirtPoint.x-x, 2) + Math.pow(dirtPoint.y - y, 2));
+				float nx = (dirtPoint.x - x) / distance;
+				float ny = (dirtPoint.y - y) / distance;
+				//dirtPoint.vx = nx * distance * .01f;
+				//dirtPoint.vy = ny * distance * .01f;
 				dirtPoint.width = DIRT_SIZE * 2 + gap;
 				dirtPoint.height = DIRT_SIZE * 2 + gap;
 				dirt.add(dirtPoint);
@@ -179,37 +183,55 @@ public class ExplosionController extends Thread
 				for (int i = 0; i < dirt.size(); i++)
 				{
 					Dirt d = dirt.get(i);
-					d.vy += -.01;
+					d.vy += -.1;
 					d.x += d.vx;
 					d.y += d.vy;
 
 					int iFromX = (int) (d.x / t.segmentWidth);
-					double percent = 1 - (d.x % t.segmentWidth) / t.segmentWidth;
-					double landYatX = t.points[iFromX] + (t.points[iFromX + 1] - t.points[iFromX]) * percent;
-					
-					if (d.y < landYatX)
+					int iFromPreviousX = (int) ((d.x-d.vx) / t.segmentWidth);
+					int minIndex = iFromX;
+					int maxIndex = iFromPreviousX;
+					if(minIndex > minIndex)
 					{
-						int firstIndex = Math.round((d.x - d.width/2) / t.segmentWidth);
-						int lastIndex = Math.round((d.x + d.width/2) / t.segmentWidth);
-						
-						if(firstIndex == lastIndex)
+						int temp = minIndex;
+						minIndex = maxIndex;
+						maxIndex = temp;
+					}
+					boolean dirtRemoved = false;
+					for(int s = 0; s < t.NUM_POINTS-1; s++)
+					{
+						float xFromIndex = s*t.segmentWidth;
+						float xFromNextIndex = (s+1)*t.segmentWidth;
+						double intersectX = lineIntersect(d.x-d.vx, d.y-d.vy, d.x, d.y, xFromIndex, t.points[s], xFromNextIndex, t.points[s+1]);
+						if(intersectX != 0)
 						{
-							t.points[firstIndex] += d.volume;
-						}
-						else
-						{
-							for(int j = firstIndex; j <= lastIndex; j++)
+							int firstIndex = Math.round((d.x - d.width/2) / t.segmentWidth);
+							int lastIndex = Math.round((d.x + d.width/2) / t.segmentWidth);
+							
+							if(firstIndex == lastIndex)
 							{
-								float amount_outside = (float) (Math.max(d.x+d.width/2 - (j+.5)*t.segmentWidth, 0) + Math.max((j-.5)*t.segmentWidth-d.x+d.width/2, 0));
-								float percent_outside = amount_outside / (d.width);
-								float percent_overlap = 1 - percent_outside;
-								t.points[j] += d.volume * percent_overlap;
+								t.points[firstIndex] += d.volume;
 							}
+							else
+							{
+								for(int j = firstIndex; j <= lastIndex; j++)
+								{
+									float amount_outside = (float) (Math.max(d.x+d.width/2 - (j+.5)*t.segmentWidth, 0) + Math.max((j-.5)*t.segmentWidth-d.x+d.width/2, 0));
+									float percent_outside = amount_outside / d.width;
+									float percent_overlap = 1 - percent_outside;
+									t.points[j] += d.volume * percent_overlap;
+								}
+							}
+							
+							t.unregisterDrawable(d);
+							dirt.remove(i);
+							dirtRemoved = true;
+							i--;
+							break;
 						}
-						
-						t.unregisterDrawable(d);
-						dirt.remove(i);
-						i--;
+					}
+					if(dirtRemoved)
+					{
 						continue;
 					}
 				}
@@ -219,11 +241,32 @@ public class ExplosionController extends Thread
 			t.finalizeGeometry();
 			try
 			{
-				Thread.currentThread().sleep(15);
+				Thread.currentThread().sleep(150);
 			} catch (InterruptedException e)
 			{
 				e.printStackTrace();
 			}
 		}
+	}
+	
+	public float lineIntersect(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4)
+	{
+		float denom = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1);
+		if (denom == 0.0)
+		{ 
+			// Lines are parallel.
+			return 0;
+		}
+		float ua = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / denom;
+		float ub = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / denom;
+		if (ua >= 0 && ua <= 1.0f && ub >= 0 && ub <= 1.0f)
+		{
+			// collision x
+			return x1 + ua * (x2 - x1);
+			// collisionY = y1 + ua * (y2 - y1);
+		}
+		
+		// no intersection
+		return 0;
 	}
 }
