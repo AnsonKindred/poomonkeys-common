@@ -190,6 +190,14 @@ public class ExplosionController extends Thread
 					
 					int iFromX = (int) (d.x / t.segmentWidth);
 					int iFromPreviousX = (int) ((d.x-d.vx) / t.segmentWidth);
+					
+					if(iFromX < 0 || iFromX >= t.points.length-1)
+					{
+						t.unregisterDrawable(d);
+						dirt.remove(i);
+						i--;
+						break;
+					}
 
 					double percent = (d.x % t.segmentWidth) / t.segmentWidth;
 					double landYatX = t.points[iFromX] + (t.points[iFromX + 1] - t.points[iFromX]) * percent;
