@@ -141,7 +141,11 @@ public class ExplosionController extends Thread
 		float tCircleY = (float) (offset + y);
 
 		int iFromX = (int) (col_x / t.segmentWidth);
-
+		if(iFromX < 0 || iFromX >= t.points.length-1)
+		{
+			return 0;
+		}
+		
 		float xPercent = (col_x % t.segmentWidth) / t.segmentWidth;
 		float p1y = t.points[iFromX];
 		float p2y = t.points[iFromX + 1];
@@ -265,6 +269,8 @@ public class ExplosionController extends Thread
 	{
 		int firstIndex = Math.round((d.x - d.width/2) / t.segmentWidth);
 		int lastIndex = Math.round((d.x + d.width/2) / t.segmentWidth);
+		firstIndex = Math.max(0, firstIndex);
+		lastIndex = Math.min(t.points.length-1, lastIndex);
 		
 		if(firstIndex == lastIndex)
 		{
@@ -284,9 +290,9 @@ public class ExplosionController extends Thread
 				
 				float volume = d.volume * percent_overlap;
 				
-				/*if(difPrevious > 0 && difNext > 0)
+				if(difPrevious > 0 && difNext > 0)
 				{
-					float percentFalling = Math.min(.75f, totalDif/.1f);
+					float percentFalling = Math.min(.75f, totalDif/.01f);
 					float previousPercent = difPrevious / totalDif;
 					float nextPercent = difNext / totalDif;
 					float fallingVolume = volume * percentFalling;
@@ -296,18 +302,18 @@ public class ExplosionController extends Thread
 				}
 				else if(difPrevious > 0)
 				{
-					float percentFalling = Math.min(.5f, difPrevious/.1f);
+					float percentFalling = Math.min(.5f, difPrevious/.01f);
 					float fallingVolume = volume * percentFalling;
 					volume = volume - fallingVolume;
 					t.offsets[j-1] += fallingVolume;
 				}
 				else if(difNext > 0)
 				{
-					float percentFalling = Math.min(.5f, difNext/.1f);
+					float percentFalling = Math.min(.5f, difNext/.01f);
 					float fallingVolume = volume * percentFalling;
 					volume = volume - fallingVolume;
 					t.offsets[j+1] += fallingVolume;
-				}*/
+				}
 				t.offsets[j] += volume;
 			}
 		}
@@ -350,7 +356,7 @@ public class ExplosionController extends Thread
 			return null;
 		}
 		
-		if(c==0)
+		if(c<=0.00001 || c>=-0.00001)
 		{
 			// dirt is moving straight down, special case
 			float t = (-a*e + a*f + e*i - f*i - b*w + e*w)/(a*j - i*j - a*k + i*k + d*w - j*w);
