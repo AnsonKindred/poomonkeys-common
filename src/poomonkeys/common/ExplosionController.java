@@ -257,7 +257,7 @@ public class ExplosionController extends Thread
 			
 			try
 			{
-				Thread.currentThread().sleep(20);
+				Thread.currentThread().sleep(1000);
 			} catch (InterruptedException e)
 			{
 				e.printStackTrace();
@@ -272,9 +272,44 @@ public class ExplosionController extends Thread
 		firstIndex = Math.max(0, firstIndex);
 		lastIndex = Math.min(t.points.length-1, lastIndex);
 		
+		float difFactor = .1f;
+		float maxFallingPercent = 1f;
+		
 		if(firstIndex == lastIndex)
 		{
-			t.offsets[firstIndex] += d.volume;
+			int j = firstIndex;
+			
+			float difPrevious = Math.max(t.points[j] - t.points[j-1], 0);
+			float difNext = Math.max(t.points[j] - t.points[j+1], 0);
+			float totalDif = difPrevious + difNext;
+			
+			float volume = d.volume;
+			
+			if(difPrevious > 0 && difNext > 0)
+			{
+				float percentFalling = Math.min(maxFallingPercent, totalDif*difFactor);
+				float previousPercent = difPrevious / totalDif;
+				float nextPercent = difNext / totalDif;
+				float fallingVolume = volume * percentFalling;
+				volume = volume - fallingVolume;
+				t.offsets[j-1] += fallingVolume*previousPercent;
+				t.offsets[j+1] += fallingVolume*nextPercent;
+			}
+			else if(difPrevious > 0)
+			{
+				float percentFalling = Math.min(maxFallingPercent, difPrevious*difFactor);
+				float fallingVolume = volume * percentFalling;
+				volume = volume - fallingVolume;
+				t.offsets[j-1] += fallingVolume;
+			}
+			else if(difNext > 0)
+			{
+				float percentFalling = Math.min(maxFallingPercent, difNext*difFactor);
+				float fallingVolume = volume * percentFalling;
+				volume = volume - fallingVolume;
+				t.offsets[j+1] += fallingVolume;
+			}
+			t.offsets[j] += volume;
 		}
 		else
 		{
@@ -292,7 +327,7 @@ public class ExplosionController extends Thread
 				
 				if(difPrevious > 0 && difNext > 0)
 				{
-					float percentFalling = Math.min(.75f, totalDif/.01f);
+					float percentFalling = Math.min(maxFallingPercent, totalDif*difFactor);
 					float previousPercent = difPrevious / totalDif;
 					float nextPercent = difNext / totalDif;
 					float fallingVolume = volume * percentFalling;
@@ -302,14 +337,14 @@ public class ExplosionController extends Thread
 				}
 				else if(difPrevious > 0)
 				{
-					float percentFalling = Math.min(.5f, difPrevious/.01f);
+					float percentFalling = Math.min(maxFallingPercent, difPrevious*difFactor);
 					float fallingVolume = volume * percentFalling;
 					volume = volume - fallingVolume;
 					t.offsets[j-1] += fallingVolume;
 				}
 				else if(difNext > 0)
 				{
-					float percentFalling = Math.min(.5f, difNext/.01f);
+					float percentFalling = Math.min(maxFallingPercent, difNext*difFactor);
 					float fallingVolume = volume * percentFalling;
 					volume = volume - fallingVolume;
 					t.offsets[j+1] += fallingVolume;
