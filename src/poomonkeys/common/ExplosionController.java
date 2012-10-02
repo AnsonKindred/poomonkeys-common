@@ -154,7 +154,7 @@ public class ExplosionController extends Thread
 				Dirt dirtPoint = new Dirt();
 				dirtPoint.x = col_x;
 				dirtPoint.y = tCircleY + d;
-				float distance = (float) Math.sqrt(Math.pow(dirtPoint.x-x, 2) + Math.pow(dirtPoint.y - y, 2));
+				float distance = (float) Math.sqrt(Math.pow(dirtPoint.x - x, 2) + Math.pow(dirtPoint.y - y, 2));
 				float nx = (dirtPoint.x - x) / distance;
 				float ny = (dirtPoint.y - y) / distance;
 				distance += 1;
@@ -184,15 +184,24 @@ public class ExplosionController extends Thread
 				for (int i = 0; i < dirt.size(); i++)
 				{
 					Dirt d = dirt.get(i);
-					d.vy += -.1;
+					d.vy += -.01;
 					d.x += d.vx;
 					d.y += d.vy;
-
+					
 					int iFromX = (int) (d.x / t.segmentWidth);
 					int iFromPreviousX = (int) ((d.x-d.vx) / t.segmentWidth);
+
+					double percent = (d.x % t.segmentWidth) / t.segmentWidth;
+					double landYatX = t.points[iFromX] + (t.points[iFromX + 1] - t.points[iFromX]) * percent;
+					
+					if(d.y > landYatX)
+					{
+						continue;
+					}
+
 					int minIndex = iFromX;
 					int maxIndex = iFromPreviousX;
-					if(minIndex > minIndex)
+					if(minIndex > maxIndex)
 					{
 						int temp = minIndex;
 						minIndex = maxIndex;
@@ -203,7 +212,7 @@ public class ExplosionController extends Thread
 					{
 						float xFromIndex = s*t.segmentWidth;
 						float xFromNextIndex = (s+1)*t.segmentWidth;
-						float[] intersect = lineIntersect(d.x-d.vx, d.y-d.vy, d.x, d.y, xFromIndex, t.points[s], xFromNextIndex, t.points[s+1]);
+						float[] intersect = lineIntersect(d.x-d.vx, d.y-d.vy, d.x, d.y, xFromIndex, t.points[s], xFromNextIndex, t.points[s+1], t.previousPoints[s], t.previousPoints[s+1]);
 						if(intersect != null)
 						{
 							d.x = intersect[0];
@@ -221,26 +230,12 @@ public class ExplosionController extends Thread
 					{
 						continue;
 					}
-					
-					double percent = (d.x % t.segmentWidth) / t.segmentWidth;
-					double landYatX = t.points[iFromX] + (t.points[iFromX + 1] - t.points[iFromX]) * percent;
-					if(d.y < landYatX)
-					{
-						d.x -= d.vx;
-						d.y -= d.vy;
-						
-						addDirt(d);
-						
-						t.unregisterDrawable(d);
-						dirt.remove(i);
-						i--;
-						continue;
-					}
 				}
 			}
 			
-			for(int i = 0; i < t.offsets.length; i++)
-			{
+			for (int i = 0; i < t.offsets.length; i++)
+			{			
+				t.previousPoints[i] = t.points[i];
 				t.points[i] += t.offsets[i];
 				t.offsets[i] = 0;
 			}
@@ -250,7 +245,7 @@ public class ExplosionController extends Thread
 			
 			try
 			{
-				Thread.currentThread().sleep(150);
+				Thread.currentThread().sleep(20);
 			} catch (InterruptedException e)
 			{
 				e.printStackTrace();
@@ -281,55 +276,106 @@ public class ExplosionController extends Thread
 				
 				float volume = d.volume * percent_overlap;
 				
-				if(difPrevious > 0 && difNext > 0)
+				/*if(difPrevious > 0 && difNext > 0)
 				{
-					float percentFalling = Math.min(1f, totalDif/.01f);
+					float percentFalling = Math.min(.75f, totalDif/.1f);
 					float previousPercent = difPrevious / totalDif;
 					float nextPercent = difNext / totalDif;
 					float fallingVolume = volume * percentFalling;
 					volume = volume - fallingVolume;
-					t.points[j-1] += fallingVolume*previousPercent;
-					t.points[j+1] += fallingVolume*nextPercent;
+					t.offsets[j-1] += fallingVolume*previousPercent;
+					t.offsets[j+1] += fallingVolume*nextPercent;
 				}
 				else if(difPrevious > 0)
 				{
-					float percentFalling = Math.min(1f, difPrevious/.01f);
+					float percentFalling = Math.min(.5f, difPrevious/.1f);
 					float fallingVolume = volume * percentFalling;
 					volume = volume - fallingVolume;
-					t.points[j-1] += fallingVolume;
+					t.offsets[j-1] += fallingVolume;
 				}
 				else if(difNext > 0)
 				{
-					float percentFalling = Math.min(1f, difNext/.01f);
+					float percentFalling = Math.min(.5f, difNext/.1f);
 					float fallingVolume = volume * percentFalling;
 					volume = volume - fallingVolume;
-					t.points[j+1] += fallingVolume;
-				}
-				t.points[j] += volume;
+					t.offsets[j+1] += fallingVolume;
+				}*/
+				t.offsets[j] += volume;
 			}
 		}
 	}
 	
-	public float[] lineIntersect(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4)
+	public float[] lineIntersect(float px1, float py1, float px2, float py2, float lx1, float ly1, float lx2, float ly2, float old_ly1, float old_ly2)
 	{
-		float denom = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1);
-		if (denom == 0.0)
-		{ 
-			// Lines are parallel.
+		float a = px1;// (* dirt point x *)
+		float b = py1;// (* dirt point y *)
+		float c = px2 - px1;// (* dirt point x velocity *)
+		float d = py2 - py1;// (* dirt point y velocity *)
+		float w = lx2 - lx1;// (* terrain segment width *)
+		float i = lx1; // (* left terrain point x *)
+		float e = old_ly1; // (* previous left terrain point y *)
+		float f = old_ly2; // (* previous right terrain point y *)
+		float g = ly1;// (* current left terrain point y *)
+		float h = ly2;// (* current right terrain point y *)
+		float j = g - e;// (* change in left terrain point y *)
+		float k = h - f;// (* change in right terrain point y *)
+
+		if(j == 0 && k == 0)
+		{
+			// Terrain hasn't moved, perform standard line intersection
+			float denom = (ly2 - ly1) * (px2 - px1) - (lx2 - lx1) * (py2 - py1);
+			if(denom == 0)
+			{
+				return null;
+			}
+			
+			float ua = ((lx2 - lx1) * (py1 - ly1) - (ly2 - ly1) * (px1 - lx1)) / denom;
+			float ub = ((px2 - px1) * (py1 - ly1) - (py2 - py1) * (px1 - lx1)) / denom;
+			if (ua >= 0 && ua <= 1.0f && ub >= 0 && ub <= 1.0f)
+			{
+				float intersect[] = new float[2];
+				intersect[0] = px1 + ua * (px2 - px1);
+				intersect[1] = py1 + ua * (py2 - py1);
+				return intersect;
+			}
+			
 			return null;
 		}
-		float ua = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / denom;
-		float ub = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / denom;
-		if (ua >= 0 && ua <= 1.0f && ub >= 0 && ub <= 1.0f)
+		
+		if(c==0)
 		{
-			// collision x
-			float result[] = new float[2];
-			result[0] = x1 + ua * (x2 - x1);
-			result[1] = y1 + ua * (y2 - y1);
-			return result;
+			// dirt is moving straight down, special case
+			float t = (-a*e + a*f + e*i - f*i - b*w + e*w)/(a*j - i*j - a*k + i*k + d*w - j*w);
+			float intersect[] = new float[2];
+			intersect[0] = px1+c*t;
+			intersect[1] = py1+d*t;
+			
+			return intersect;
 		}
 		
-		// no intersection
+		float A = c*(j-k);
+		float B = c*(e-f) + j*(a-i) + k*(i-a) + w*(d-j);
+		float C = a*(e-f) + i*(f-e) + w*(b-e);
+		
+		float t1 = (float) ((-B - Math.sqrt(B*B - 4*A*C)) / (2*A));
+		float t2 = (float) ((-B + Math.sqrt(B*B - 4*A*C)) / (2*A));
+		float m1 = (a+c*t1-i)/w;
+		float m2 = (a+c*t2-i)/w;
+		
+		float intersect[] = new float[2];
+		if(t1 >= 0 && t1 <= 1 && m1 >=0 && m1 <= 1)
+		{
+			intersect[0] = px1+c*t1;
+			intersect[1] = py1+d*t1;
+			
+			return intersect;
+		}
+		else if(t2 >= 0 && t2 <= 1 && m2 >= 0 && m2 <= 1)
+		{
+			intersect[0] = px1+c*t2;
+			intersect[1] = py1+d*t2;
+			return intersect;
+		}
 		return null;
 	}
 }

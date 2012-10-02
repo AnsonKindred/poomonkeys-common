@@ -8,6 +8,7 @@ public class Terrain extends Drawable
 	int NUM_POINTS = 512;
 	float segmentWidth;
 	float points[] = new float[NUM_POINTS];
+	float previousPoints[] = new float[NUM_POINTS];
 	float offsets[] = new float[NUM_POINTS];
 
 	public Terrain() 

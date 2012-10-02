@@ -12,6 +12,7 @@ public class TerrainGenerator
 		t.points[t.NUM_POINTS - 1] = r.nextFloat()*t.height;
 		t.points[0] = r.nextFloat()*t.height;
 		midPointDivision(0, t.NUM_POINTS - 1, 0, t);
+		t.previousPoints = t.points.clone();
 	}
 
 	static void midPointDivision(int start, int end, int depth, Terrain t) 
