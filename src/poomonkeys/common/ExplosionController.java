@@ -257,7 +257,7 @@ public class ExplosionController extends Thread
 			
 			try
 			{
-				Thread.currentThread().sleep(1000);
+				Thread.currentThread().sleep(200);
 			} catch (InterruptedException e)
 			{
 				e.printStackTrace();
@@ -391,15 +391,19 @@ public class ExplosionController extends Thread
 			return null;
 		}
 		
-		if(c<=0.00001 || c>=-0.00001)
+		if(c<=0.000001 || c>=-0.000001)
 		{
 			// dirt is moving straight down, special case
 			float t = (-a*e + a*f + e*i - f*i - b*w + e*w)/(a*j - i*j - a*k + i*k + d*w - j*w);
-			float intersect[] = new float[2];
-			intersect[0] = px1+c*t;
-			intersect[1] = py1+d*t;
 			
-			return intersect;
+			if(t >= 0 && t <= 1)
+			{
+				float intersect[] = new float[2];
+				intersect[0] = px1+c*t;
+				intersect[1] = py1+d*t;
+				
+				return intersect;
+			}
 		}
 		
 		float A = c*(j-k);
