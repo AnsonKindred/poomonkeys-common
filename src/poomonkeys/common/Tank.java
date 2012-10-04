@@ -15,18 +15,18 @@ public class Tank extends Drawable
 	
 	public Tank()
 	{
+		width = WIDTH;
+		height = HEIGHT;
 		this.registerDrawable(turret);
 	}
 	
 	public void buildGeometry(float viewWidth, float viewHeight)
 	{
-		width = WIDTH;
-		height = HEIGHT;
 		float[] baseGeometry = {
 		            // X, Y
-					0, 0, 0,
-					width, 0f,0,
-					width/2, height,0
+					-width/2, -height/2, 0,
+					width/2, -height/2f,0,
+					0, height/2,0
 		        };
 
 		this.drawMode = GL2.GL_LINE_LOOP;
@@ -39,15 +39,8 @@ public class Tank extends Drawable
 			};
 		turret.drawMode = GL2.GL_LINES;
 		turret.baseGeometry = turretGeometry;
-		turret.p.x = width/2;
-		turret.p.y = height;
-	}
-	
-	public void init(float viewWidth, float viewHeight)
-	{
-		p.x = (float) (Math.random()*viewWidth);
-		p.y = (float) (Math.random()*viewHeight);
-		super.init(viewWidth, viewHeight);
+		turret.p.x = 0;
+		turret.p.y = height/2;
 	}
 	
 }

@@ -1,7 +1,6 @@
 package poomonkeys.common;
 
 import java.util.ArrayList;
-
 import javax.media.opengl.GL2;
 
 public class Terrain extends Drawable
@@ -43,6 +42,23 @@ public class Terrain extends Drawable
 		drawMode = GL2.GL_LINE_STRIP;
 	}
 	
+	public void addTankRandom(Tank tank)
+	{
+		tank.p.x = (float) (Math.random()*width);
+		int min_index = Math.max(0, (int) ((tank.p.x - tank.width/2) / segmentWidth));
+		int max_index = Math.min(NUM_POINTS - 1, (int) ((tank.p.x + tank.width/2) / segmentWidth)+1);
+		float y1 = points[min_index];
+		float y2 = points[max_index];
+		
+		float average = (y1+y2)/2;
+		for(int i = min_index; i <= max_index; i++)
+		{
+			points[i] = average;
+		}
+		update();
+		tank.p.y = average + tank.height/2;
+	}
+	
 	// x and y are relative to the bottom left of the terrain
 	public void explodeCircle(float x, float y, float r)
 	{
@@ -64,7 +80,7 @@ public class Terrain extends Drawable
 		
 		float totalDirtVolume = 0;
 		ArrayList<Dirt> dirt = _generateDirtpoints(min_x, max_x, x, y, r);
-		totalDirtVolume = collapseToCircleBottom(min_index, max_index, x, y, r);
+		totalDirtVolume = _collapseToCircleBottom(min_index, max_index, x, y, r);
 
 		// Assign a portion of the removed dirt volume to each dirt point
 		float individualDirtVolume = totalDirtVolume / dirt.size();
@@ -146,8 +162,10 @@ public class Terrain extends Drawable
 	
 	/*
 	 * Sets terrain heights to the bottom of a circle at (x, y) with radius r
+	 * Also returns the total amount of land removed between the top of the circle
+	 * and the current land height
 	 */
-	public float collapseToCircleBottom(int min_index, int max_index, float x, float y, float r)
+	private float _collapseToCircleBottom(int min_index, int max_index, float x, float y, float r)
 	{
 		float dirtVolume = 0;
 
