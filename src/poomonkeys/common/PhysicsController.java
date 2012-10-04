@@ -32,13 +32,13 @@ public class PhysicsController extends Thread
 			{
 				Drawable d = collidables.get(i);
 				
-				d.vy += GRAVITY;
+				d.v.y += GRAVITY;
 				
-				d.x += d.vx;
-				d.y += d.vy;
+				d.p.x += d.v.x;
+				d.p.y += d.v.y;
 			
-				int iFromX = (int) (d.x / t.segmentWidth);
-				int iFromPreviousX = (int) ((d.x-d.vx) / t.segmentWidth);
+				int iFromX = (int) (d.p.x / t.segmentWidth);
+				int iFromPreviousX = (int) ((d.p.x-d.v.x) / t.segmentWidth);
 				
 				if(iFromX < 0 || iFromX >= t.points.length-1)
 				{
@@ -47,10 +47,10 @@ public class PhysicsController extends Thread
 				}
 				else
 				{
-					double percent = (d.x % t.segmentWidth) / t.segmentWidth;
+					double percent = (d.p.x % t.segmentWidth) / t.segmentWidth;
 					double landYatX = t.points[iFromX] + (t.points[iFromX + 1] - t.points[iFromX]) * percent;
 					
-					if(d.y > landYatX)
+					if(d.p.y > landYatX)
 					{
 						continue;
 					}
@@ -68,7 +68,7 @@ public class PhysicsController extends Thread
 					{
 						float xFromIndex = s*t.segmentWidth;
 						float xFromNextIndex = (s+1)*t.segmentWidth;
-						float[] intersect = lineIntersect(d.x-d.vx, d.y-d.vy, d.x, d.y, xFromIndex, t.points[s], xFromNextIndex, t.points[s+1], t.previousPoints[s], t.previousPoints[s+1]);
+						float[] intersect = lineIntersect(d.p.x-d.v.x, d.p.y-d.v.y, d.p.x, d.p.y, xFromIndex, t.points[s], xFromNextIndex, t.points[s+1], t.previousPoints[s], t.previousPoints[s+1]);
 						if(intersect != null)
 						{
 							d.intersectTerrain(intersect[0], intersect[1]);
@@ -99,18 +99,18 @@ public class PhysicsController extends Thread
 	
 	public float[] lineIntersect(float px1, float py1, float px2, float py2, float lx1, float ly1, float lx2, float ly2, float old_ly1, float old_ly2)
 	{
-		float a = px1;// (* dirt point x *)
-		float b = py1;// (* dirt point y *)
-		float c = px2 - px1;// (* dirt point x velocity *)
-		float d = py2 - py1;// (* dirt point y velocity *)
-		float w = lx2 - lx1;// (* terrain segment width *)
-		float i = lx1; // (* left terrain point x *)
-		float e = old_ly1; // (* previous left terrain point y *)
-		float f = old_ly2; // (* previous right terrain point y *)
-		float g = ly1;// (* current left terrain point y *)
-		float h = ly2;// (* current right terrain point y *)
-		float j = g - e;// (* change in left terrain point y *)
-		float k = h - f;// (* change in right terrain point y *)
+		float a = px1;			// (* dirt point x *)
+		float b = py1;			// (* dirt point y *)
+		float c = px2 - px1;	// (* dirt point x velocity *)
+		float d = py2 - py1;	// (* dirt point y velocity *)
+		float w = lx2 - lx1;	// (* terrain segment width *)
+		float i = lx1; 			// (* left terrain point x *)
+		float e = old_ly1; 		// (* previous left terrain point y *)
+		float f = old_ly2; 		// (* previous right terrain point y *)
+		float g = ly1;			// (* current left terrain point y *)
+		float h = ly2;			// (* current right terrain point y *)
+		float j = g - e;		// (* change in left terrain point y *)
+		float k = h - f;		// (* change in right terrain point y *)
 
 		if(j == 0 && k == 0)
 		{

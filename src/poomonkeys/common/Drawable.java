@@ -12,8 +12,8 @@ public class Drawable
 	public ArrayList<Drawable> drawables = new ArrayList<Drawable>();
 	public ArrayList<EventListener> listenerList = new ArrayList<EventListener>();
 	
-	public float x = 0, y = 0;
-	public float vx, vy;
+	public Point2D p = new Point2D();
+	public Point2D v = new Point2D();
 	
 	public float rotation = 0;
 	public float slope    = 0;
@@ -41,11 +41,6 @@ public class Drawable
     {
     	drawables.add(d);
     }
-	
-	public void unregisterDrawable(Drawable d)
-	{
-		drawables.remove(d);
-	}
 	
 	public void buildGeometry(float viewWidth, float viewHeight)
 	{

@@ -10,8 +10,8 @@ public class AimingHUD extends Drawable
 	public FireButton startButton;
 	Drawable divider;
 	
-	static final float DIVIDER = .52f; // ratio of width
-	static final float ANGLE_PICKER_LEFT_OFFSET = .03f; // ratio of width
+	static final float DIVIDER = 82f;
+	static final float ANGLE_PICKER_LEFT_OFFSET = 0f;
 	
 	static AimingHUD instance = null;
 	
@@ -35,17 +35,19 @@ public class AimingHUD extends Drawable
 		this.registerDrawable(divider);
 	}
 	
-	public void buildGeometry(float viewHeight, float viewWidth)
+	public void buildGeometry(float viewWidth, float viewHeight)
 	{	
-		anglePicker.circle.x = -ANGLE_PICKER_LEFT_OFFSET*viewWidth;
-		anglePicker.line.x = -ANGLE_PICKER_LEFT_OFFSET*viewWidth;
+		anglePicker.circle.p.x = viewWidth/2-ANGLE_PICKER_LEFT_OFFSET;
+		anglePicker.line.p.x = viewWidth/2-ANGLE_PICKER_LEFT_OFFSET;
+		anglePicker.circle.p.y = viewHeight/2-ANGLE_PICKER_LEFT_OFFSET;
+		anglePicker.line.p.y = viewHeight/2-ANGLE_PICKER_LEFT_OFFSET;
 		
 		float[] line = {
-				0, -viewHeight/2, 0,
-				0, viewHeight/2, 0
+				0, 0, 0,
+				0, viewHeight, 0
 			};
 		divider.baseGeometry = line; 
-		divider.x = DIVIDER*viewWidth;
+		divider.p.x = DIVIDER;
 		divider.drawMode = GL2.GL_LINES;
 	}
 	
@@ -56,10 +58,10 @@ public class AimingHUD extends Drawable
 	
 	public void touch(float x, float y, float viewWidth, float viewHeight)
 	{
-		if(x < -viewWidth/2+startButton.width && y < -viewHeight/2+startButton.height) {
+		if(x < startButton.width && y < startButton.height) {
 			startButton.depress();
 		}
-		else if(x < divider.x) {
+		else if(x < divider.p.x) {
 			anglePicker.touch(x, y);
 		}
 		else {
@@ -69,7 +71,7 @@ public class AimingHUD extends Drawable
 	
 	public void click(float x, float y, float viewWidth, float viewHeight)
 	{
-		if(x < -viewWidth/2+startButton.width && y < -viewHeight/2+startButton.height) {
+		if(x < startButton.width && y < startButton.height) {
 			startButton.click();
 		}
 	}

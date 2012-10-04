@@ -27,12 +27,12 @@ public class ExplosionController extends Thread
 	public void explode(float x, float y, float r)
 	{
 		// Helpful square at click point
-		Dirt test = new Dirt();
-		test.x = x;
-		test.y = y;
+		/*Dirt test = new Dirt();
+		test.p.x = x;
+		test.p.y = y;
 		test.width = 1;
 		test.height = 1;
-		t.registerDrawable(test);
+		t.registerDrawable(test);*/
 
 		// The min and max terrain index that lies within the explosion radius
 		int min_index = (int) ((x - r) / t.segmentWidth) + 1;
@@ -148,14 +148,14 @@ public class ExplosionController extends Thread
 			while (tCircleY + d <= top)
 			{
 				Dirt dirtPoint = new Dirt();
-				dirtPoint.x = col_x;
-				dirtPoint.y = tCircleY + d;
-				float distance = (float) Math.sqrt(Math.pow(dirtPoint.x - x, 2) + Math.pow(dirtPoint.y - y, 2));
-				float nx = (dirtPoint.x - x) / distance;
-				float ny = (dirtPoint.y - y) / distance;
+				dirtPoint.p.x = col_x;
+				dirtPoint.p.y = tCircleY + d;
+				float distance = (float) Math.sqrt(Math.pow(dirtPoint.p.x - x, 2) + Math.pow(dirtPoint.p.y - y, 2));
+				float nx = (dirtPoint.p.x - x) / distance;
+				float ny = (dirtPoint.p.y - y) / distance;
 				distance += 1;
-				dirtPoint.vx = nx / (distance*distance) * 5;
-				dirtPoint.vy = ny / (distance*distance) * 5;
+				dirtPoint.v.x = nx / (distance*distance) * 5;
+				dirtPoint.v.y = ny / (distance*distance) * 5;
 				dirtPoint.width = DIRT_SIZE * 2 + gap;
 				dirtPoint.height = DIRT_SIZE * 2 + gap;
 				dirt.add(dirtPoint);

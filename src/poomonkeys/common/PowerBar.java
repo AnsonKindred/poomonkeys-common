@@ -4,10 +4,10 @@ import javax.media.opengl.GL2;
 
 public class PowerBar extends Drawable
 {
-	static final float INNER_PADDING = .01f; // ratio of screen height
-	static final float LEFT = .355f; // ratio of screen width
+	static final float INNER_PADDING = 1f; 
+	static final float LEFT = 86f;
 	static final float HEIGHT = .8f; // ratio of screen height
-	static final float WIDTH = .1f; // ratio of screen width
+	static final float WIDTH = 10f;
 	
 	Drawable inner = new Drawable();
 	
@@ -26,16 +26,16 @@ public class PowerBar extends Drawable
 	public void buildGeometry(float viewWidth, float viewHeight)
 	{
 		height  = viewHeight*HEIGHT;
-		width   = viewWidth*WIDTH;
-		padding = viewWidth*INNER_PADDING;
+		width   = WIDTH;
+		padding = INNER_PADDING;
 		
 		baseGeometry[0]=0;     baseGeometry[1]=0;       baseGeometry[2]=0;
 		baseGeometry[3]=width; baseGeometry[4]=0;       baseGeometry[5]=0;
 		baseGeometry[6]=width; baseGeometry[7]=height;  baseGeometry[8]=0;
 		baseGeometry[9]=0;     baseGeometry[10]=height; baseGeometry[11]=0;
 
-		this.x = viewWidth*LEFT;
-		this.y = -height/2f;
+		this.p.x = LEFT;
+		this.p.y = viewHeight/2 - height/2;
 		
 		super.baseGeometry = baseGeometry;
 		super.drawMode = GL2.GL_LINE_LOOP;
@@ -45,8 +45,8 @@ public class PowerBar extends Drawable
 		
 		_compileInnerBar();
 		
-		inner.x = padding/2.f;
-		inner.y = padding/2.f;
+		inner.p.x = padding/2.f;
+		inner.p.y = padding/2.f;
 	}
 	
 	private void _compileInnerBar()
@@ -74,7 +74,7 @@ public class PowerBar extends Drawable
 	public void touch(float x, float y)
 	{
 		// distance from base of power bar
-		percentFull = ((y + inner.height/2) / inner.height);
+		percentFull = ((y-this.p.y) / inner.height);
 		percentFull = Math.max(Math.min(percentFull, 1), 0);
 		_compileInnerBar();
 		inner.finalizeGeometry();

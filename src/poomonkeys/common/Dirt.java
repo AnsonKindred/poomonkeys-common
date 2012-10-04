@@ -17,8 +17,8 @@ public class Dirt extends Drawable
 	
 	public void intersectTerrain(float x, float y)
 	{
-		this.x = x;
-		this.y = y;
+		this.p.x = x;
+		this.p.y = y;
 
 		this.removeFromGLEngine = true;
 		

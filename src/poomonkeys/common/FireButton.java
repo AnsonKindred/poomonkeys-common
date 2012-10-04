@@ -5,8 +5,8 @@ import javax.media.opengl.GLAutoDrawable;
 
 public class FireButton extends Drawable 
 {
-	static final float WIDTH = .2f;
-	static final float HEIGHT = .2f;
+	static final float WIDTH = 15f;
+	static final float HEIGHT = 8f;
 	
 	//private Drawable text = new Drawable();
 	
@@ -14,14 +14,14 @@ public class FireButton extends Drawable
 	{
 		baseGeometry = new float[12];
 		baseGeometry[0]=0; baseGeometry[1]=0; baseGeometry[2]=0;
-		baseGeometry[3]=0; baseGeometry[4]=HEIGHT*viewHeight; baseGeometry[5]=0;
-		baseGeometry[6]=WIDTH*viewWidth; baseGeometry[7]=0; baseGeometry[8]=0;
-		baseGeometry[9]=WIDTH*viewWidth; baseGeometry[10]=HEIGHT*viewHeight; baseGeometry[11]=0;
+		baseGeometry[3]=0; baseGeometry[4]=HEIGHT; baseGeometry[5]=0;
+		baseGeometry[6]=WIDTH; baseGeometry[7]=0; baseGeometry[8]=0;
+		baseGeometry[9]=WIDTH; baseGeometry[10]=HEIGHT; baseGeometry[11]=0;
 		this.drawMode = GL2.GL_TRIANGLE_STRIP;
-		this.x = -viewWidth/2;
-		this.y = -viewHeight/2;
-		this.width = WIDTH*viewWidth;
-		this.height = HEIGHT*viewHeight;
+		this.p.x = 0;
+		this.p.y = 0;
+		this.width = WIDTH;
+		this.height = HEIGHT;
 		
 		/*text.baseGeometry = this.baseGeometry;
 		text.drawMode = GL2.GL_TRIANGLE_STRIP;

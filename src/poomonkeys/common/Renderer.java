@@ -8,7 +8,6 @@ public interface Renderer
 	abstract long getTimeSinceLastDraw();
 	
 	public void registerDrawable(Drawable d);
-	public void unregisterDrawable(Drawable d);
 	
 	public float getViewWidth();
 	public float getViewHeight();

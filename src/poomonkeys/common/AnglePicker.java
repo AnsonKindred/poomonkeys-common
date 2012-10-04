@@ -1,7 +1,6 @@
 package poomonkeys.common;
 
 import javax.media.opengl.GL2;
-import javax.media.opengl.GLAutoDrawable;
 
 public class AnglePicker extends Drawable
 {
@@ -9,7 +8,7 @@ public class AnglePicker extends Drawable
 	public Drawable line = new Drawable();
 	
 	static final float LINE_LENGTH = 1.15f; // ratio of radius
-	static final float RADIUS = .8f; // ratio of height
+	static final float RADIUS = .4f; // ratio of height
 	static final int CIRCLE_RES = 50;
 	
 	private float radius;
@@ -23,7 +22,7 @@ public class AnglePicker extends Drawable
 	
 	public void buildGeometry(float viewWidth, float viewHeight)
 	{
-		radius = Math.min(viewHeight/2, AimingHUD.getInstance().divider.x - this.circle.x)*RADIUS;
+		radius = Math.min(viewHeight, AimingHUD.getInstance().divider.p.x - this.circle.p.x)*RADIUS;
 		lineLength = LINE_LENGTH*radius;
 		
 		float[] circle_geometry = new float[CIRCLE_RES*3];
@@ -44,6 +43,6 @@ public class AnglePicker extends Drawable
 	
 	public void touch(float x, float y)
 	{
-		line.setRotation(x, y);
+		line.setRotation(x-this.line.p.x, y-this.line.p.y);
 	}
 }
