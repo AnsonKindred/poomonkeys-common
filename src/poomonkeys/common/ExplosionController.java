@@ -4,7 +4,6 @@ import java.util.ArrayList;
 
 public class ExplosionController extends Thread
 {
-	ArrayList<ArrayList<Dirt>> explosions = new ArrayList<ArrayList<Dirt>>();
 	Terrain t;
 
 	static float DIRT_SIZE = .2f;
@@ -62,16 +61,9 @@ public class ExplosionController extends Thread
 		float individualDirtVolume = totalDirtVolume / dirt.size();
 		for (int d = 0; d < dirt.size(); d++)
 		{
-			dirt.get(d).volume = individualDirtVolume;
-		}
-
-		// Add the dirt point list as a new explosion to be animated
-		explosions.add(dirt);
-
-		// Start the animation process if it isn't running
-		if (!this.isAlive())
-		{
-			this.start();
+			Dirt dirtPoint = dirt.get(d);
+			dirtPoint.volume = individualDirtVolume;
+			PhysicsController.getInstance().addCollidable(dirtPoint);
 		}
 	}
 
@@ -162,8 +154,8 @@ public class ExplosionController extends Thread
 				float nx = (dirtPoint.x - x) / distance;
 				float ny = (dirtPoint.y - y) / distance;
 				distance += 1;
-				dirtPoint.vx = nx / (distance*distance) * 8f;
-				dirtPoint.vy = ny / (distance*distance) * 8f;
+				dirtPoint.vx = nx / (distance*distance) * 5;
+				dirtPoint.vy = ny / (distance*distance) * 5;
 				dirtPoint.width = DIRT_SIZE * 2 + gap;
 				dirtPoint.height = DIRT_SIZE * 2 + gap;
 				dirt.add(dirtPoint);
@@ -173,262 +165,5 @@ public class ExplosionController extends Thread
 		}
 
 		return top - tCircleY;
-	}
-
-	/**
-	 * Animates the dirt points and handles adding them back to the terrain
-	 */
-	public void run()
-	{
-		while (!explosions.isEmpty())
-		{
-			for (int e = 0; e < explosions.size(); e++)
-			{
-				ArrayList<Dirt> dirt = explosions.get(e);
-				for (int i = 0; i < dirt.size(); i++)
-				{
-					Dirt d = dirt.get(i);
-					d.vy += -.01;
-					d.x += d.vx;
-					d.y += d.vy;
-					
-					int iFromX = (int) (d.x / t.segmentWidth);
-					int iFromPreviousX = (int) ((d.x-d.vx) / t.segmentWidth);
-					
-					if(iFromX < 0 || iFromX >= t.points.length-1)
-					{
-						t.unregisterDrawable(d);
-						dirt.remove(i);
-						i--;
-						break;
-					}
-
-					double percent = (d.x % t.segmentWidth) / t.segmentWidth;
-					double landYatX = t.points[iFromX] + (t.points[iFromX + 1] - t.points[iFromX]) * percent;
-					
-					if(d.y > landYatX)
-					{
-						continue;
-					}
-
-					int minIndex = iFromX;
-					int maxIndex = iFromPreviousX;
-					if(minIndex > maxIndex)
-					{
-						int temp = minIndex;
-						minIndex = maxIndex;
-						maxIndex = temp;
-					}
-					boolean dirtRemoved = false;
-					for(int s = minIndex; s <= maxIndex; s++)
-					{
-						float xFromIndex = s*t.segmentWidth;
-						float xFromNextIndex = (s+1)*t.segmentWidth;
-						float[] intersect = lineIntersect(d.x-d.vx, d.y-d.vy, d.x, d.y, xFromIndex, t.points[s], xFromNextIndex, t.points[s+1], t.previousPoints[s], t.previousPoints[s+1]);
-						if(intersect != null)
-						{
-							d.x = intersect[0];
-							d.y = intersect[1];
-							addDirt(d);
-							
-							t.unregisterDrawable(d);
-							dirt.remove(i);
-							dirtRemoved = true;
-							i--;
-							break;
-						}
-					}
-					if(dirtRemoved)
-					{
-						continue;
-					}
-				}
-			}
-			
-			for (int i = 0; i < t.offsets.length; i++)
-			{			
-				t.previousPoints[i] = t.points[i];
-				t.points[i] += t.offsets[i];
-				t.offsets[i] = 0;
-			}
-
-			t.buildGeometry(t.width, t.height);
-			t.finalizeGeometry();
-			
-			try
-			{
-				Thread.currentThread().sleep(200);
-			} catch (InterruptedException e)
-			{
-				e.printStackTrace();
-			}
-		}
-	}
-	
-	public void addDirt(Dirt d)
-	{
-		int firstIndex = Math.round((d.x - d.width/2) / t.segmentWidth);
-		int lastIndex = Math.round((d.x + d.width/2) / t.segmentWidth);
-		firstIndex = Math.max(0, firstIndex);
-		lastIndex = Math.min(t.points.length-1, lastIndex);
-		
-		float difFactor = .1f;
-		float maxFallingPercent = 1f;
-		
-		if(firstIndex == lastIndex)
-		{
-			int j = firstIndex;
-			
-			float difPrevious = Math.max(t.points[j] - t.points[j-1], 0);
-			float difNext = Math.max(t.points[j] - t.points[j+1], 0);
-			float totalDif = difPrevious + difNext;
-			
-			float volume = d.volume;
-			
-			if(difPrevious > 0 && difNext > 0)
-			{
-				float percentFalling = Math.min(maxFallingPercent, totalDif*difFactor);
-				float previousPercent = difPrevious / totalDif;
-				float nextPercent = difNext / totalDif;
-				float fallingVolume = volume * percentFalling;
-				volume = volume - fallingVolume;
-				t.offsets[j-1] += fallingVolume*previousPercent;
-				t.offsets[j+1] += fallingVolume*nextPercent;
-			}
-			else if(difPrevious > 0)
-			{
-				float percentFalling = Math.min(maxFallingPercent, difPrevious*difFactor);
-				float fallingVolume = volume * percentFalling;
-				volume = volume - fallingVolume;
-				t.offsets[j-1] += fallingVolume;
-			}
-			else if(difNext > 0)
-			{
-				float percentFalling = Math.min(maxFallingPercent, difNext*difFactor);
-				float fallingVolume = volume * percentFalling;
-				volume = volume - fallingVolume;
-				t.offsets[j+1] += fallingVolume;
-			}
-			t.offsets[j] += volume;
-		}
-		else
-		{
-			for(int j = firstIndex; j <= lastIndex; j++)
-			{
-				float amount_outside = (float) (Math.max(d.x+d.width/2 - (j+.5)*t.segmentWidth, 0) + Math.max((j-.5)*t.segmentWidth-d.x+d.width/2, 0));
-				float percent_outside = amount_outside / d.width;
-				float percent_overlap = 1 - percent_outside;
-				
-				float difPrevious = Math.max(t.points[j] - t.points[j-1], 0);
-				float difNext = Math.max(t.points[j] - t.points[j+1], 0);
-				float totalDif = difPrevious + difNext;
-				
-				float volume = d.volume * percent_overlap;
-				
-				if(difPrevious > 0 && difNext > 0)
-				{
-					float percentFalling = Math.min(maxFallingPercent, totalDif*difFactor);
-					float previousPercent = difPrevious / totalDif;
-					float nextPercent = difNext / totalDif;
-					float fallingVolume = volume * percentFalling;
-					volume = volume - fallingVolume;
-					t.offsets[j-1] += fallingVolume*previousPercent;
-					t.offsets[j+1] += fallingVolume*nextPercent;
-				}
-				else if(difPrevious > 0)
-				{
-					float percentFalling = Math.min(maxFallingPercent, difPrevious*difFactor);
-					float fallingVolume = volume * percentFalling;
-					volume = volume - fallingVolume;
-					t.offsets[j-1] += fallingVolume;
-				}
-				else if(difNext > 0)
-				{
-					float percentFalling = Math.min(maxFallingPercent, difNext*difFactor);
-					float fallingVolume = volume * percentFalling;
-					volume = volume - fallingVolume;
-					t.offsets[j+1] += fallingVolume;
-				}
-				t.offsets[j] += volume;
-			}
-		}
-	}
-	
-	public float[] lineIntersect(float px1, float py1, float px2, float py2, float lx1, float ly1, float lx2, float ly2, float old_ly1, float old_ly2)
-	{
-		float a = px1;// (* dirt point x *)
-		float b = py1;// (* dirt point y *)
-		float c = px2 - px1;// (* dirt point x velocity *)
-		float d = py2 - py1;// (* dirt point y velocity *)
-		float w = lx2 - lx1;// (* terrain segment width *)
-		float i = lx1; // (* left terrain point x *)
-		float e = old_ly1; // (* previous left terrain point y *)
-		float f = old_ly2; // (* previous right terrain point y *)
-		float g = ly1;// (* current left terrain point y *)
-		float h = ly2;// (* current right terrain point y *)
-		float j = g - e;// (* change in left terrain point y *)
-		float k = h - f;// (* change in right terrain point y *)
-
-		if(j == 0 && k == 0)
-		{
-			// Terrain hasn't moved, perform standard line intersection
-			float denom = (ly2 - ly1) * (px2 - px1) - (lx2 - lx1) * (py2 - py1);
-			if(denom == 0)
-			{
-				return null;
-			}
-			
-			float ua = ((lx2 - lx1) * (py1 - ly1) - (ly2 - ly1) * (px1 - lx1)) / denom;
-			float ub = ((px2 - px1) * (py1 - ly1) - (py2 - py1) * (px1 - lx1)) / denom;
-			if (ua >= 0 && ua <= 1.0f && ub >= 0 && ub <= 1.0f)
-			{
-				float intersect[] = new float[2];
-				intersect[0] = px1 + ua * (px2 - px1);
-				intersect[1] = py1 + ua * (py2 - py1);
-				return intersect;
-			}
-			
-			return null;
-		}
-		
-		if(c<=0.000001 || c>=-0.000001)
-		{
-			// dirt is moving straight down, special case
-			float t = (-a*e + a*f + e*i - f*i - b*w + e*w)/(a*j - i*j - a*k + i*k + d*w - j*w);
-			
-			if(t >= 0 && t <= 1)
-			{
-				float intersect[] = new float[2];
-				intersect[0] = px1+c*t;
-				intersect[1] = py1+d*t;
-				
-				return intersect;
-			}
-		}
-		
-		float A = c*(j-k);
-		float B = c*(e-f) + j*(a-i) + k*(i-a) + w*(d-j);
-		float C = a*(e-f) + i*(f-e) + w*(b-e);
-		
-		float t1 = (float) ((-B - Math.sqrt(B*B - 4*A*C)) / (2*A));
-		float t2 = (float) ((-B + Math.sqrt(B*B - 4*A*C)) / (2*A));
-		float m1 = (a+c*t1-i)/w;
-		float m2 = (a+c*t2-i)/w;
-		
-		float intersect[] = new float[2];
-		if(t1 >= 0 && t1 <= 1 && m1 >=0 && m1 <= 1)
-		{
-			intersect[0] = px1+c*t1;
-			intersect[1] = py1+d*t1;
-			
-			return intersect;
-		}
-		else if(t2 >= 0 && t2 <= 1 && m2 >= 0 && m2 <= 1)
-		{
-			intersect[0] = px1+c*t2;
-			intersect[1] = py1+d*t2;
-			return intersect;
-		}
-		return null;
 	}
 }

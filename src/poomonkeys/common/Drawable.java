@@ -13,6 +13,7 @@ public class Drawable
 	public ArrayList<EventListener> listenerList = new ArrayList<EventListener>();
 	
 	public float x = 0, y = 0;
+	public float vx, vy;
 	
 	public float rotation = 0;
 	public float slope    = 0;
@@ -33,6 +34,8 @@ public class Drawable
 	public int drawMode;
 	
 	public boolean didInit = false;
+	public boolean removeFromGLEngine = false;
+	public boolean removeFromPhysicsEngine = false;
 	
 	public void registerDrawable(Drawable d)
     {
@@ -177,4 +180,9 @@ public class Drawable
             listener.glClicked(evt);
         }
     }
+
+	public void intersectTerrain(float x, float y)
+	{
+		
+	}
 }

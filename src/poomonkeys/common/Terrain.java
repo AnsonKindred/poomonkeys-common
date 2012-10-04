@@ -15,6 +15,19 @@ public class Terrain extends Drawable
 	{
 	}
 	
+	public void update()
+	{
+		for (int i = 0; i < offsets.length; i++)
+		{			
+			previousPoints[i] = points[i];
+			points[i] += offsets[i];
+			offsets[i] = 0;
+		}
+
+		buildGeometry(width, height);
+		finalizeGeometry();
+	}
+	
 	public void buildGeometry(float viewWidth, float viewHeight)
 	{
 		baseGeometry = new float[NUM_POINTS*3];
