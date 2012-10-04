@@ -4,7 +4,7 @@ import java.util.ArrayList;
 
 public class PhysicsController extends Thread
 {
-	public ArrayList<Drawable> collidables = new ArrayList<Drawable>();
+	private ArrayList<Drawable> collidables = new ArrayList<Drawable>();
 	public static final float GRAVITY = -.01f;
 
 	private static PhysicsController instance = null;
