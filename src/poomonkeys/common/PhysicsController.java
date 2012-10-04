@@ -28,59 +28,61 @@ public class PhysicsController extends Thread
 		Terrain t = ExplosionController.getInstance().t;
 		while (true)
 		{
-			for (int i = 0; i < collidables.size(); i++)
-			{
-				Drawable d = collidables.get(i);
-				
-				d.v.y += GRAVITY;
-				
-				d.p.x += d.v.x;
-				d.p.y += d.v.y;
-			
-				int iFromX = (int) (d.p.x / t.segmentWidth);
-				int iFromPreviousX = (int) ((d.p.x-d.v.x) / t.segmentWidth);
-				
-				if(iFromX < 0 || iFromX >= t.points.length-1)
+			synchronized (collidables) 
+			{ 
+				for (int i = collidables.size()-1; i >= 0; i--)
 				{
-					d.removeFromGLEngine = true;
-					d.removeFromPhysicsEngine = true;
-				}
-				else
-				{
-					double percent = (d.p.x % t.segmentWidth) / t.segmentWidth;
-					double landYatX = t.points[iFromX] + (t.points[iFromX + 1] - t.points[iFromX]) * percent;
+					Drawable d = collidables.get(i);
 					
-					if(d.p.y > landYatX)
-					{
-						continue;
-					}
-		
-					int minIndex = iFromX;
-					int maxIndex = iFromPreviousX;
-					if(minIndex > maxIndex)
-					{
-						int temp = minIndex;
-						minIndex = maxIndex;
-						maxIndex = temp;
-					}
+					d.v.y += GRAVITY;
 					
-					for(int s = minIndex; s <= maxIndex; s++)
+					d.p.x += d.v.x;
+					d.p.y += d.v.y;
+				
+					int iFromX = (int) (d.p.x / t.segmentWidth);
+					int iFromPreviousX = (int) ((d.p.x-d.v.x) / t.segmentWidth);
+					
+					if(iFromX < 0 || iFromX >= t.points.length-1)
 					{
-						float xFromIndex = s*t.segmentWidth;
-						float xFromNextIndex = (s+1)*t.segmentWidth;
-						float[] intersect = lineIntersect(d.p.x-d.v.x, d.p.y-d.v.y, d.p.x, d.p.y, xFromIndex, t.points[s], xFromNextIndex, t.points[s+1], t.previousPoints[s], t.previousPoints[s+1]);
-						if(intersect != null)
+						d.removeFromGLEngine = true;
+						d.removeFromPhysicsEngine = true;
+					}
+					else
+					{
+						double percent = (d.p.x % t.segmentWidth) / t.segmentWidth;
+						double landYatX = t.points[iFromX] + (t.points[iFromX + 1] - t.points[iFromX]) * percent;
+						
+						if(d.p.y > landYatX)
 						{
-							d.intersectTerrain(intersect[0], intersect[1]);
-							break;
+							continue;
+						}
+			
+						int minIndex = iFromX;
+						int maxIndex = iFromPreviousX;
+						if(minIndex > maxIndex)
+						{
+							int temp = minIndex;
+							minIndex = maxIndex;
+							maxIndex = temp;
+						}
+						
+						for(int s = minIndex; s <= maxIndex; s++)
+						{
+							float xFromIndex = s*t.segmentWidth;
+							float xFromNextIndex = (s+1)*t.segmentWidth;
+							float[] intersect = lineIntersect(d.p.x-d.v.x, d.p.y-d.v.y, d.p.x, d.p.y, xFromIndex, t.points[s], xFromNextIndex, t.points[s+1], t.previousPoints[s], t.previousPoints[s+1]);
+							if(intersect != null)
+							{
+								d.intersectTerrain(intersect[0], intersect[1]);
+								break;
+							}
 						}
 					}
-				}
-				
-				if(d.removeFromPhysicsEngine)
-				{
-					collidables.remove(i);
-					i--;
+					
+					if(d.removeFromPhysicsEngine)
+					{
+						collidables.remove(i);
+					}
 				}
 			}
 			
@@ -177,11 +179,9 @@ public class PhysicsController extends Thread
 	
 	public void addCollidable(Drawable c)
 	{
-		collidables.add(c);
-	}
-	
-	public void removeCollidable(Drawable c)
-	{
-		collidables.remove(c);
+		synchronized (collidables) 
+		{
+			collidables.add(c);
+		}
 	}
 }

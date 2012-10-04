@@ -21,6 +21,7 @@ public class Dirt extends Drawable
 		this.p.y = y;
 
 		this.removeFromGLEngine = true;
+		this.removeFromPhysicsEngine = true;
 		
 		Terrain t = ExplosionController.getInstance().t;
 		int firstIndex = Math.round((x - width/2) / t.segmentWidth);
