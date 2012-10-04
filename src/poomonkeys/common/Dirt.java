@@ -15,7 +15,7 @@ public class Dirt extends Drawable
 		drawMode = GL2.GL_LINE_LOOP;
 	}
 	
-	public void intersectTerrain(float x, float y)
+	public void intersectTerrain(Terrain t, float x, float y)
 	{
 		this.p.x = x;
 		this.p.y = y;
@@ -23,7 +23,6 @@ public class Dirt extends Drawable
 		this.removeFromGLEngine = true;
 		this.removeFromPhysicsEngine = true;
 		
-		Terrain t = ExplosionController.getInstance().t;
 		int firstIndex = Math.round((x - width/2) / t.segmentWidth);
 		int lastIndex = Math.round((x + width/2) / t.segmentWidth);
 		firstIndex = Math.max(0, firstIndex);

@@ -176,7 +176,7 @@ public class Drawable
         }
     }
 
-	public void intersectTerrain(float x, float y)
+	public void intersectTerrain(Terrain t, float x, float y)
 	{
 		
 	}

@@ -4,11 +4,28 @@ import java.util.ArrayList;
 
 public class PhysicsController extends Thread
 {
-	private ArrayList<Drawable> collidables = new ArrayList<Drawable>();
 	public static final float GRAVITY = -.01f;
+	
+	private ArrayList<Drawable> collidables = new ArrayList<Drawable>();
+	private Terrain t;
 
 	private static PhysicsController instance = null;
 
+	public static PhysicsController getInstance(Terrain t)
+	{
+		if(instance == null)
+		{
+			instance = new PhysicsController(t);
+			instance.start();
+		}
+		else
+		{
+			instance.t = t;
+		}
+		
+		return instance;
+	}
+	
 	public static PhysicsController getInstance()
 	{
 		if(instance == null)
@@ -20,14 +37,34 @@ public class PhysicsController extends Thread
 		return instance;
 	}
 	
+	public PhysicsController()
+	{
+	}
+	
+	public PhysicsController(Terrain t)
+	{
+		this.t = t;
+	}
+	
 	/**
 	 * Animates the dirt points and handles adding them back to the terrain
 	 */
 	public void run()
 	{
-		Terrain t = ExplosionController.getInstance().t;
 		while (true)
 		{
+			if(collidables.isEmpty() || t == null)
+			{
+				try
+				{
+					Thread.currentThread().sleep(20);
+				} 
+				catch (InterruptedException e)
+				{
+					e.printStackTrace();
+				}
+				continue;
+			}
 			synchronized (collidables) 
 			{ 
 				for (int i = collidables.size()-1; i >= 0; i--)
@@ -73,7 +110,7 @@ public class PhysicsController extends Thread
 							float[] intersect = lineIntersect(d.p.x-d.v.x, d.p.y-d.v.y, d.p.x, d.p.y, xFromIndex, t.points[s], xFromNextIndex, t.points[s+1], t.previousPoints[s], t.previousPoints[s+1]);
 							if(intersect != null)
 							{
-								d.intersectTerrain(intersect[0], intersect[1]);
+								d.intersectTerrain(t, intersect[0], intersect[1]);
 								break;
 							}
 						}
