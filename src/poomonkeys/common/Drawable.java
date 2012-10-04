@@ -7,13 +7,14 @@ import java.util.ArrayList;
 import java.util.EventListener;
 import java.util.Iterator;
 
-public class Drawable
+public class Drawable extends Point2D
 {
 	public ArrayList<Drawable> drawables = new ArrayList<Drawable>();
 	public ArrayList<EventListener> listenerList = new ArrayList<EventListener>();
 	
-	public Point2D p = new Point2D();
 	public Point2D v = new Point2D();
+	public Point2D a = new Point2D();
+	public float m = 1;
 	
 	public float rotation = 0;
 	public float slope    = 0;

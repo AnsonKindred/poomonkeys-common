@@ -39,8 +39,8 @@ public class Tank extends Drawable
 			};
 		turret.drawMode = GL2.GL_LINES;
 		turret.baseGeometry = turretGeometry;
-		turret.p.x = 0;
-		turret.p.y = height/2;
+		turret.x = 0;
+		turret.y = height/2;
 	}
 	
 }

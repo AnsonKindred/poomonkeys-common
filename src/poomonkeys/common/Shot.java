@@ -34,8 +34,8 @@ public class Shot extends Drawable
 		pointRadius      = POINT_RADIUS * viewHeight;
 		maxStartVelocity = MAX_START_VELOCITY * viewHeight;
 		
-		this.p.x = x;
-		this.p.y = y;
+		this.x = x;
+		this.y = y;
 		
 		v.x = vx;
 		v.y = vy;
@@ -51,8 +51,8 @@ public class Shot extends Drawable
 		maxStartVelocity = MAX_START_VELOCITY * viewHeight;
 		
 		// starting point of shot, set to the top of the tank
-		p.x = player.tank.p.x+player.tank.width/2;
-		p.y = player.tank.p.y+player.tank.height;
+		x = player.tank.x+player.tank.width/2;
+		y = player.tank.y+player.tank.height;
 		
 		// Get a normalized velocity vector from the turret angle
 		int flip = player.tank.turret.getRotation() < 0 ? 1 : -1;
@@ -61,8 +61,8 @@ public class Shot extends Drawable
 		VectorUtil.normalize2D(v);
 		
 		// Adjust the starting position so that it is at the end of the turret
-		p.x += v.x*player.tank.turretLength;
-		p.y += v.y*player.tank.turretLength;
+		x += v.x*player.tank.turretLength;
+		y += v.y*player.tank.turretLength;
 		
 		// Magnify the velocity vector by power
 		VectorUtil.mult2D(v, power*maxStartVelocity);

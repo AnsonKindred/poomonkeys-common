@@ -25,7 +25,7 @@ class VectorUtil
 			float total = mag2D(p);
 			if(total != 0)
 			{
-				total *= mag;
+				total /= mag;
 				p.x /= total;
 				p.y /= total;
 			}
@@ -36,6 +36,11 @@ class VectorUtil
 	{
 		p.x *= vm;
 		p.y *= vm;
+	}
+	
+	static float distance(Point2D p1, Point2D p2)
+	{
+		return (float) Math.sqrt(Math.pow(p2.x-p1.x, 2) + Math.pow(p2.y-p1.y, 2));
 	}
 
 }

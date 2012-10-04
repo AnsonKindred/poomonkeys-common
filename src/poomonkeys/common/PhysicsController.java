@@ -8,6 +8,10 @@ public class PhysicsController extends Thread
 	
 	private ArrayList<Drawable> collidables = new ArrayList<Drawable>();
 	private Terrain t;
+	public ArrayList<Point2D> globalForces = new ArrayList<Point2D>();
+	public ArrayList<Point2D> permanentGlobalForces = new ArrayList<Point2D>();
+	public ArrayList<PointForce> pointForces = new ArrayList<PointForce>();
+	public ArrayList<PointForce> permanentPointForces = new ArrayList<PointForce>();
 
 	private static PhysicsController instance = null;
 
@@ -39,11 +43,13 @@ public class PhysicsController extends Thread
 	
 	public PhysicsController()
 	{
+		permanentGlobalForces.add(new Point2D(0, GRAVITY));
 	}
 	
 	public PhysicsController(Terrain t)
 	{
 		this.t = t;
+		permanentGlobalForces.add(new Point2D(0, GRAVITY));
 	}
 	
 	/**
@@ -71,13 +77,52 @@ public class PhysicsController extends Thread
 				{
 					Drawable d = collidables.get(i);
 					
-					d.v.y += GRAVITY;
+					Point2D totalForce = new Point2D();
+					for(int f = 0; f < permanentGlobalForces.size(); f++)
+					{
+						Point2D force = permanentGlobalForces.get(f);
+						totalForce.x += force.x;
+						totalForce.y += force.y;
+					}
 					
-					d.p.x += d.v.x;
-					d.p.y += d.v.y;
+					for(int f = 0; f < globalForces.size(); f++)
+					{
+						Point2D force = globalForces.get(f);
+						totalForce.x += force.x;
+						totalForce.y += force.y;
+					}
+					
+					for(int f = 0; f < permanentPointForces.size(); f++)
+					{
+						PointForce force = permanentPointForces.get(f);
+						float distance_factor = (float) (1 / Math.pow(1 + VectorUtil.distance(force, d), 2));
+						Point2D forceDirection = new Point2D(d.x-force.x, d.y-force.y);
+						VectorUtil.scaleTo2D(forceDirection, force.magnitude);
+						totalForce.x += forceDirection.x * distance_factor;
+						totalForce.y += forceDirection.y * distance_factor;
+					}
+					
+					for(int f = 0; f < pointForces.size(); f++)
+					{
+						PointForce force = pointForces.get(f);
+						float distance_factor = (float) (1 / Math.pow(1 + VectorUtil.distance(force, d), 2));
+						Point2D forceDirection = new Point2D(d.x-force.x, d.y-force.y);
+						VectorUtil.scaleTo2D(forceDirection, force.magnitude);
+						totalForce.x += forceDirection.x * distance_factor;
+						totalForce.y += forceDirection.y * distance_factor;
+					}
+					
+					d.a.x = totalForce.x/d.m;
+					d.a.y = totalForce.y/d.m;
+					
+					d.v.x += d.a.x;
+					d.v.y += d.a.y;
+					
+					d.x += d.v.x;
+					d.y += d.v.y;
 				
-					int iFromX = (int) (d.p.x / t.segmentWidth);
-					int iFromPreviousX = (int) ((d.p.x-d.v.x) / t.segmentWidth);
+					int iFromX = (int) (d.x / t.segmentWidth);
+					int iFromPreviousX = (int) ((d.x-d.v.x) / t.segmentWidth);
 					
 					if(iFromX < 0 || iFromX >= t.points.length-1)
 					{
@@ -86,10 +131,10 @@ public class PhysicsController extends Thread
 					}
 					else
 					{
-						double percent = (d.p.x % t.segmentWidth) / t.segmentWidth;
+						double percent = (d.x % t.segmentWidth) / t.segmentWidth;
 						double landYatX = t.points[iFromX] + (t.points[iFromX + 1] - t.points[iFromX]) * percent;
 						
-						if(d.p.y > landYatX)
+						if(d.y > landYatX)
 						{
 							continue;
 						}
@@ -107,7 +152,7 @@ public class PhysicsController extends Thread
 						{
 							float xFromIndex = s*t.segmentWidth;
 							float xFromNextIndex = (s+1)*t.segmentWidth;
-							float[] intersect = lineIntersect(d.p.x-d.v.x, d.p.y-d.v.y, d.p.x, d.p.y, xFromIndex, t.points[s], xFromNextIndex, t.points[s+1], t.previousPoints[s], t.previousPoints[s+1]);
+							float[] intersect = lineIntersect(d.x-d.v.x, d.y-d.v.y, d.x, d.y, xFromIndex, t.points[s], xFromNextIndex, t.points[s+1], t.previousPoints[s], t.previousPoints[s+1]);
 							if(intersect != null)
 							{
 								d.intersectTerrain(t, intersect[0], intersect[1]);
@@ -124,6 +169,9 @@ public class PhysicsController extends Thread
 			}
 			
 			t.update();
+			
+			globalForces.clear();
+			pointForces.clear();
 			
 			try
 			{
@@ -220,5 +268,14 @@ public class PhysicsController extends Thread
 		{
 			collidables.add(c);
 		}
+	}
+
+	public void addCollidables(ArrayList<? extends Drawable> things)
+	{
+		synchronized (collidables) 
+		{
+			collidables.addAll(things);
+		}
+		
 	}
 }

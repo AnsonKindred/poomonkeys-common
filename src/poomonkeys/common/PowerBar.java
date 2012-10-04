@@ -34,8 +34,8 @@ public class PowerBar extends Drawable
 		baseGeometry[6]=width; baseGeometry[7]=height;  baseGeometry[8]=0;
 		baseGeometry[9]=0;     baseGeometry[10]=height; baseGeometry[11]=0;
 
-		this.p.x = LEFT;
-		this.p.y = viewHeight/2 - height/2;
+		this.x = LEFT;
+		this.y = viewHeight/2 - height/2;
 		
 		super.baseGeometry = baseGeometry;
 		super.drawMode = GL2.GL_LINE_LOOP;
@@ -45,8 +45,8 @@ public class PowerBar extends Drawable
 		
 		_compileInnerBar();
 		
-		inner.p.x = padding/2.f;
-		inner.p.y = padding/2.f;
+		inner.x = padding/2.f;
+		inner.y = padding/2.f;
 	}
 	
 	private void _compileInnerBar()
@@ -74,7 +74,7 @@ public class PowerBar extends Drawable
 	public void touch(float x, float y)
 	{
 		// distance from base of power bar
-		percentFull = ((y-this.p.y) / inner.height);
+		percentFull = ((y-this.y) / inner.height);
 		percentFull = Math.max(Math.min(percentFull, 1), 0);
 		_compileInnerBar();
 		inner.finalizeGeometry();

@@ -18,8 +18,8 @@ public class FireButton extends Drawable
 		baseGeometry[6]=WIDTH; baseGeometry[7]=0; baseGeometry[8]=0;
 		baseGeometry[9]=WIDTH; baseGeometry[10]=HEIGHT; baseGeometry[11]=0;
 		this.drawMode = GL2.GL_TRIANGLE_STRIP;
-		this.p.x = 0;
-		this.p.y = 0;
+		this.x = 0;
+		this.y = 0;
 		this.width = WIDTH;
 		this.height = HEIGHT;
 		
