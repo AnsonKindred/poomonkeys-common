@@ -11,12 +11,13 @@ public class Tank extends Drawable
 	float baseGeometry[];
 	
 	public Drawable turret = new Drawable();
-	float turretLength = 5;
+	float turretLength = 1;
 	
 	public Tank()
 	{
 		width = WIDTH;
 		height = HEIGHT;
+		m=2;
 		this.registerDrawable(turret);
 	}
 	
@@ -43,4 +44,10 @@ public class Tank extends Drawable
 		turret.y = height/2;
 	}
 	
+	public void intersectTerrain(Terrain t, float x, float y)
+	{
+		removeFromPhysicsEngine = true;
+		this.v.x = 0;
+		this.v.y = 0;
+	}
 }

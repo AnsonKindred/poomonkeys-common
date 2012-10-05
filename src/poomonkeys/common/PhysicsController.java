@@ -43,13 +43,11 @@ public class PhysicsController extends Thread
 	
 	public PhysicsController()
 	{
-		permanentGlobalForces.add(new Point2D(0, GRAVITY));
 	}
 	
 	public PhysicsController(Terrain t)
 	{
 		this.t = t;
-		permanentGlobalForces.add(new Point2D(0, GRAVITY));
 	}
 	
 	/**
@@ -118,46 +116,83 @@ public class PhysicsController extends Thread
 					d.v.x += d.a.x;
 					d.v.y += d.a.y;
 					
+					d.v.y += GRAVITY;
+					
 					d.x += d.v.x;
 					d.y += d.v.y;
-				
-					int iFromX = (int) (d.x / t.segmentWidth);
-					int iFromPreviousX = (int) ((d.x-d.v.x) / t.segmentWidth);
 					
-					if(iFromX < 0 || iFromX >= t.points.length-1)
+					int iFromLeftX = (int) ((d.x-d.width/2)/t.segmentWidth);
+					int iFromRightX = (int) ((d.x+d.width/2)/t.segmentWidth);
+					int iFromCenterX = (int) (d.x/t.segmentWidth);
+					int iFromPreviousCenterX = (int) ((d.x-d.v.x)/t.segmentWidth);
+					
+					if(iFromCenterX < 0 || iFromCenterX >= t.points.length-1)
 					{
 						d.removeFromGLEngine = true;
 						d.removeFromPhysicsEngine = true;
 					}
 					else
-					{
-						double percent = (d.x % t.segmentWidth) / t.segmentWidth;
-						double landYatX = t.points[iFromX] + (t.points[iFromX + 1] - t.points[iFromX]) * percent;
+					{						
+						double leftPercent = ((d.x-d.width/2) % t.segmentWidth) / t.segmentWidth;
+						double rightPercent = ((d.x+d.width/2) % t.segmentWidth) / t.segmentWidth;
+						double landYatLeftX = t.points[iFromLeftX] + (t.points[iFromLeftX + 1] - t.points[iFromLeftX]) * leftPercent;
+						double landYatRightX = t.points[iFromRightX] + (t.points[iFromRightX + 1] - t.points[iFromRightX]) * rightPercent;
 						
-						if(d.y > landYatX)
+						boolean leftIntersected = d.y-d.height/2 <= landYatLeftX;
+						boolean rightIntersected = d.y-d.height/2 <= landYatRightX;
+						
+						int min_index = 0;
+						int max_index = 0;
+						float x1 = 0;
+						float x2 = 0;
+						
+						if(!leftIntersected && !rightIntersected)
 						{
 							continue;
 						}
-			
-						int minIndex = iFromX;
-						int maxIndex = iFromPreviousX;
-						if(minIndex > maxIndex)
+						
+						else if(leftIntersected)
 						{
-							int temp = minIndex;
-							minIndex = maxIndex;
-							maxIndex = temp;
+							int iFromPreviousLeftX = (int) ((d.x - d.width/2 - d.v.x)/t.segmentWidth);
+							min_index = iFromPreviousLeftX;
+							max_index = iFromLeftX;
+							x1 = d.x - d.v.x - d.width/2;
+							x2 = d.x - d.width/2;
+						}
+						else //if(rightIntersected)
+						{
+							int iFromPreviousRightX = (int) ((d.x + d.width/2 - d.v.x)/t.segmentWidth);
+							min_index = iFromPreviousRightX;
+							max_index = iFromRightX;
+							x1 = d.x - d.v.x + d.width/2;
+							x2 = d.x + d.width/2;
 						}
 						
-						for(int s = minIndex; s <= maxIndex; s++)
+						if(min_index > max_index)
+						{
+							int temp = min_index;
+							min_index = max_index;
+							max_index = temp;
+						}
+						
+						for(int s = 0; s <= t.NUM_POINTS-2; s++)
 						{
 							float xFromIndex = s*t.segmentWidth;
 							float xFromNextIndex = (s+1)*t.segmentWidth;
-							float[] intersect = lineIntersect(d.x-d.v.x, d.y-d.v.y, d.x, d.y, xFromIndex, t.points[s], xFromNextIndex, t.points[s+1], t.previousPoints[s], t.previousPoints[s+1]);
+							
+							float y1 = d.y - d.v.y - d.height/2;
+							float y2 = d.y - d.height/2;
+							
+							float[] intersect = lineIntersect(x1, y1, x2, y2, xFromIndex, t.points[s], xFromNextIndex, t.points[s+1], t.previousPoints[s], t.previousPoints[s+1]);
 							if(intersect != null)
 							{
 								d.intersectTerrain(t, intersect[0], intersect[1]);
 								break;
 							}
+						}
+						if(!d.removeFromPhysicsEngine)
+						{
+							d.intersectTerrain(t, d.x, d.y);
 						}
 					}
 					
@@ -221,7 +256,7 @@ public class PhysicsController extends Thread
 			return null;
 		}
 		
-		if(c<=0.000001 || c>=-0.000001)
+		if(c<=0.000001 && c>=-0.000001)
 		{
 			// dirt is moving straight down, special case
 			float t = (-a*e + a*f + e*i - f*i - b*w + e*w)/(a*j - i*j - a*k + i*k + d*w - j*w);
@@ -236,9 +271,15 @@ public class PhysicsController extends Thread
 			}
 		}
 		
-		float A = c*(j-k);
-		float B = c*(e-f) + j*(a-i) + k*(i-a) + w*(d-j);
-		float C = a*(e-f) + i*(f-e) + w*(b-e);
+		float A = c*j-c*k;
+		
+		if(A == 0)
+		{
+			return null;
+		}
+		
+		float B = c*e - c*f + a*j - i*j - a*k + i*k + d*w - j*w;
+		float C = a*e - a*f - e*i + f*i + b*w - e*w;
 		
 		float t1 = (float) ((-B - Math.sqrt(B*B - 4*A*C)) / (2*A));
 		float t2 = (float) ((-B + Math.sqrt(B*B - 4*A*C)) / (2*A));
@@ -248,17 +289,19 @@ public class PhysicsController extends Thread
 		float intersect[] = new float[2];
 		if(t1 >= 0 && t1 <= 1 && m1 >=0 && m1 <= 1)
 		{
+			System.out.println("1");
 			intersect[0] = px1+c*t1;
 			intersect[1] = py1+d*t1;
-			
+
 			return intersect;
 		}
-		else if(t2 >= 0 && t2 <= 1 && m2 >= 0 && m2 <= 1)
+		/*else if(t2 >= 0 && t2 <= 1 && m2 >= 0 && m2 <= 1)
 		{
+			System.out.println("2");
 			intersect[0] = px1+c*t2;
 			intersect[1] = py1+d*t2;
 			return intersect;
-		}
+		}*/
 		return null;
 	}
 	
