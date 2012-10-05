@@ -289,7 +289,7 @@ public class PhysicsController extends Thread
 		float intersect[] = new float[2];
 		if(t1 >= 0 && t1 <= 1 && m1 >=0 && m1 <= 1)
 		{
-			System.out.println("1");
+			//System.out.println("1");
 			intersect[0] = px1+c*t1;
 			intersect[1] = py1+d*t1;
 
