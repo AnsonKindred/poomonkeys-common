@@ -123,10 +123,8 @@ public class PhysicsController extends Thread
 					
 					int iFromLeftX = (int) ((d.x-d.width/2)/t.segmentWidth);
 					int iFromRightX = (int) ((d.x+d.width/2)/t.segmentWidth);
-					int iFromCenterX = (int) (d.x/t.segmentWidth);
-					int iFromPreviousCenterX = (int) ((d.x-d.v.x)/t.segmentWidth);
 					
-					if(iFromCenterX < 0 || iFromCenterX >= t.points.length-1)
+					if(iFromLeftX < 0 || iFromRightX >= t.points.length-1)
 					{
 						d.removeFromGLEngine = true;
 						d.removeFromPhysicsEngine = true;
@@ -289,7 +287,6 @@ public class PhysicsController extends Thread
 		float intersect[] = new float[2];
 		if(t1 >= 0 && t1 <= 1 && m1 >=0 && m1 <= 1)
 		{
-			//System.out.println("1");
 			intersect[0] = px1+c*t1;
 			intersect[1] = py1+d*t1;
 
@@ -320,5 +317,10 @@ public class PhysicsController extends Thread
 			collidables.addAll(things);
 		}
 		
+	}
+
+	public boolean hasCollidable(Drawable tank)
+	{
+		return collidables.contains(tank);
 	}
 }

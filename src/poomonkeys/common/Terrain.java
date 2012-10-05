@@ -7,7 +7,7 @@ public class Terrain extends Drawable
 {
 
 	static final int NUM_POINTS = 256;
-	static final float DIRT_SIZE = .2f;
+	static final float DIRT_SIZE = .5f;
 	float segmentWidth;
 	float points[] = new float[NUM_POINTS];
 	float previousPoints[] = new float[NUM_POINTS];
@@ -121,11 +121,7 @@ public class Terrain extends Drawable
 				dirtPoint.x = col_x;
 				dirtPoint.y = tCircleY + d;
 				float distance = (float) Math.sqrt(Math.pow(dirtPoint.x - x, 2) + Math.pow(dirtPoint.y - y, 2));
-				float nx = (dirtPoint.x - x) / distance;
-				float ny = (dirtPoint.y - y) / distance;
 				distance += 1;
-				//dirtPoint.v.x = nx / (distance*distance) * 5;
-				//dirtPoint.v.y = ny / (distance*distance) * 5;
 				dirtPoint.width = DIRT_SIZE * 2 + gap;
 				dirtPoint.height = DIRT_SIZE * 2 + gap;
 				dirt.add(dirtPoint);
