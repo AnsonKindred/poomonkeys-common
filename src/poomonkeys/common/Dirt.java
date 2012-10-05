@@ -30,11 +30,28 @@ public class Dirt extends Drawable
 		
 		for(int j = firstIndex; j <= lastIndex; j++)
 		{
-			float amount_outside = (float) (Math.max(x+width/2 - (j+.5)*t.segmentWidth, 0) + Math.max((j-.5)*t.segmentWidth-x+width/2, 0));
-			float percent_outside = amount_outside / width;
-			float percent_overlap = 1 - percent_outside;
-			
-			t.offsets[j] += volume * percent_overlap;
+			addDirt(t, firstIndex);
+		}
+	}
+	public void addDirt(Terrain t, int index)
+	{
+		if (index < 1 || index > t.NUM_POINTS - 2){
+			return;
+		}
+		if (t.points[index - 1] + t.offsets[index - 1] < t.points[index] + t.offsets[index] && t.points[index - 1]  + t.offsets[index-1]< t.points[index + 1] + t.offsets[index+1])
+		{
+			addDirt(t, index - 1);
+			return;
+		}
+		if (t.points[index + 1] + t.offsets[index + 1] < t.points[index] + t.offsets[index] && t.points[index + 1] + t.offsets[index + 1] < t.points[index - 1] + t.offsets[index - 1])
+		{
+			addDirt(t, index + 1);
+			return;
+		}
+		if (t.points[index] + t.offsets[index] <= t.points[index + 1]  + t.offsets[index+1]&& t.points[index]  + t.offsets[index]<= t.points[index - 1] + t.offsets[index -1])
+		{
+			t.offsets[index] += volume / 2;
+			return;
 		}
 	}
 }
