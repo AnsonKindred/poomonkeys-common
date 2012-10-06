@@ -7,7 +7,7 @@ public class Terrain extends Drawable
 {
 
 	static final int NUM_POINTS = 256;
-	static final float DIRT_SIZE = .5f;
+	static final float DIRT_SIZE = .2f;
 	float segmentWidth;
 	float points[] = new float[NUM_POINTS];
 	float previousPoints[] = new float[NUM_POINTS];

@@ -2,12 +2,13 @@ package poomonkeys.common;
 
 import javax.media.opengl.GL2;
 
-public class Dirt extends Drawable {
+public class Dirt extends Drawable
+{
 	public float volume;
-	float rVolume;
-	int TRAILLENGTH = 15;
+	int TRAILLENGTH = 10;
 
-	public void buildGeometry(float viewWidth, float viewHeight) {
+	public void buildGeometry(float viewWidth, float viewHeight)
+	{
 		baseGeometry = new float[4 * 3];
 		baseGeometry[0] = -width / 2;
 		baseGeometry[1] = -height / 2;
@@ -24,62 +25,60 @@ public class Dirt extends Drawable {
 		drawMode = GL2.GL_LINE_LOOP;
 	}
 
-	public void intersectTerrain(Terrain t, float x, float y) {
+	public void intersectTerrain(Terrain t, float x, float y)
+	{
 		this.x = x;
 		this.y = y;
-		rVolume = volume;
+		
 		this.removeFromGLEngine = true;
 		this.removeFromPhysicsEngine = true;
 
-		int index = Math.round((x) / t.segmentWidth);
+		int index = Math.round(x / t.segmentWidth);
 
 		index = Math.max(0, index);
 		index = Math.min(t.points.length - 1, index);
-
-		for (int j = index; j <= index; j++) {
-			addDirt(t, index);
-		}
+		t.offsets[index] += this.volume;
+		//addDirt(t, index);
 	}
 
-	public void addDirt(Terrain t, int index) {
-		if (index < 1 || index > t.NUM_POINTS - 2) {
+	public void addDirt(Terrain t, int index)
+	{
+		if (index < 1 || index > t.NUM_POINTS - 2)
+		{
 			return;
 		}
-		if (t.points[index - 1] + t.offsets[index - 1] < t.points[index]
-				+ t.offsets[index]
-				&& t.points[index - 1] + t.offsets[index - 1] < t.points[index + 1]
-						+ t.offsets[index + 1]) {
-			t.offsets[index - 1] += rVolume / TRAILLENGTH;
-			volume -= rVolume / TRAILLENGTH;
-			if (volume < 0) {
-				return;
-			}
-			addDirt(t, index - 1);
+		
+		if(this.volume < .001)
+		{
+			t.offsets[index] += this.volume;
 			return;
 		}
-		if (t.points[index + 1] + t.offsets[index + 1] < t.points[index]
-				+ t.offsets[index]
-				&& t.points[index + 1] + t.offsets[index + 1] < t.points[index - 1]
-						+ t.offsets[index - 1]) {
-			t.offsets[index + 1] += rVolume / TRAILLENGTH;
-			volume -= rVolume / TRAILLENGTH;
-			if (volume < 0) {
-				return;
-			}
-			addDirt(t, index + 1);
-			return;
+		
+		float currentHeight = t.points[index]+t.offsets[index];
+		float leftHeight = t.points[index-1]+t.offsets[index-1];
+		float rightHeight = t.points[index+1]+t.offsets[index+1];
+		
+		if(currentHeight > rightHeight)
+		{
+			float segmentLength = (float) Math.sqrt(Math.pow((index+1)*t.segmentWidth - index*t.segmentWidth, 2) + Math.pow(rightHeight-currentHeight, 2));
+			float slopeFactor = Math.min(1, (currentHeight-rightHeight)/segmentLength);
+			t.offsets[index] += (this.volume/2)*slopeFactor;
+			this.volume -= (this.volume/2)*slopeFactor;
+			addDirt(t, index+1);
 		}
-		if (t.points[index] + t.offsets[index] <= t.points[index + 1]
-				+ t.offsets[index + 1]
-				&& t.points[index] + t.offsets[index] <= t.points[index - 1]
-						+ t.offsets[index - 1]) {
-			t.offsets[index] += volume / TRAILLENGTH;
-			volume -= rVolume / TRAILLENGTH;
-			if (volume < 0) {
-				return;
-			}
+		else if(currentHeight > leftHeight)
+		{
+			float segmentLength = (float) Math.sqrt(Math.pow((index-1)*t.segmentWidth - index*t.segmentWidth, 2) + Math.pow(leftHeight-currentHeight, 2));
+			float slopeFactor = Math.min(1, (currentHeight-leftHeight)/segmentLength);
+			t.offsets[index] += (this.volume/2)*slopeFactor;
+			this.volume -= (this.volume/2)*slopeFactor;
+			addDirt(t, index-1);
+		}
+		else // current point is lower than neighbors
+		{
+			t.offsets[index] += this.volume/2;
+			this.volume -= this.volume/2;
 			addDirt(t, index);
-			return;
 		}
 	}
 }

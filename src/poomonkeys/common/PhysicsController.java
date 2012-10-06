@@ -75,7 +75,7 @@ public class PhysicsController extends Thread
 				{
 					Drawable d = collidables.get(i);
 					
-					Point2D totalForce = new Point2D();
+					Point2D totalForce = new Point2D(0, 0);
 					for(int f = 0; f < permanentGlobalForces.size(); f++)
 					{
 						Point2D force = permanentGlobalForces.get(f);
@@ -117,7 +117,7 @@ public class PhysicsController extends Thread
 					d.v.y += d.a.y;
 					
 					d.v.y += GRAVITY;
-					
+
 					d.x += d.v.x;
 					d.y += d.v.y;
 					
@@ -141,61 +141,61 @@ public class PhysicsController extends Thread
 						
 						int min_index = 0;
 						int max_index = 0;
-						float x1 = 0;
-						float x2 = 0;
 						
-						if(!leftIntersected && !rightIntersected)
+						if(leftIntersected || rightIntersected)
 						{
-							continue;
-						}
+							Point2D point = null;
 						
-						else if(leftIntersected)
-						{
-							int iFromPreviousLeftX = (int) ((d.x - d.width/2 - d.v.x)/t.segmentWidth);
-							min_index = iFromPreviousLeftX;
-							max_index = iFromLeftX;
-							x1 = d.x - d.v.x - d.width/2;
-							x2 = d.x - d.width/2;
-						}
-						else //if(rightIntersected)
-						{
-							int iFromPreviousRightX = (int) ((d.x + d.width/2 - d.v.x)/t.segmentWidth);
-							min_index = iFromPreviousRightX;
-							max_index = iFromRightX;
-							x1 = d.x - d.v.x + d.width/2;
-							x2 = d.x + d.width/2;
-						}
-						
-						if(min_index > max_index)
-						{
-							int temp = min_index;
-							min_index = max_index;
-							max_index = temp;
-						}
-						
-						for(int s = 0; s <= t.NUM_POINTS-2; s++)
-						{
-							float xFromIndex = s*t.segmentWidth;
-							float xFromNextIndex = (s+1)*t.segmentWidth;
-							
-							float y1 = d.y - d.v.y - d.height/2;
-							float y2 = d.y - d.height/2;
-							
-							float[] intersect = lineIntersect(x1, y1, x2, y2, xFromIndex, t.points[s], xFromNextIndex, t.points[s+1], t.previousPoints[s], t.previousPoints[s+1]);
-							if(intersect != null)
+							if(leftIntersected)
 							{
-								d.intersectTerrain(t, intersect[0], intersect[1]);
-								break;
+								int iFromPreviousLeftX = (int) ((d.x - d.width/2 - d.v.x)/t.segmentWidth);
+								min_index = iFromPreviousLeftX;
+								max_index = iFromLeftX;
+								point = new Point2D(d.x-d.v.x-d.width/2, d.y-d.v.y-d.height/2);
 							}
-						}
-						if(!d.removeFromPhysicsEngine)
-						{
-							d.intersectTerrain(t, d.x, d.y);
+							else //if(rightIntersected)
+							{
+								int iFromPreviousRightX = (int) ((d.x + d.width/2 - d.v.x)/t.segmentWidth);
+								min_index = iFromPreviousRightX;
+								max_index = iFromRightX;
+								point = new Point2D(d.x-d.v.x+d.width/2, d.y-d.v.y-d.height/2);
+							}
+							
+							if(min_index > max_index)
+							{
+								int temp = min_index;
+								min_index = max_index;
+								max_index = temp;
+							}
+							
+							for(int s = 0; s <= t.NUM_POINTS-2; s++)
+							{
+								float xFromIndex = s*t.segmentWidth;
+								float xFromNextIndex = (s+1)*t.segmentWidth;
+								
+								Point2D segmentLeft = new Point2D(xFromIndex, t.previousPoints[s]);
+								Point2D segmentLeftV = new Point2D(0, t.points[s]-t.previousPoints[s]);
+								Point2D segmentRight = new Point2D(xFromNextIndex, t.points[s+1]);
+								Point2D segmentRightV = new Point2D(0, t.points[s+1]-t.previousPoints[s+1]);
+								Point2D intersect = lineIntersect(point, d.v, segmentLeft, segmentLeftV, segmentRight, segmentRightV);
+								if(intersect != null)
+								{
+									System.out.println(intersect.x + ", " + intersect.y);
+									d.intersectTerrain(t, intersect.x, intersect.y);
+									break;
+								}
+							}
+
+							/*if(!d.removeFromPhysicsEngine)
+							{
+								d.intersectTerrain(t, d.x, d.y);
+							}*/
 						}
 					}
 					
 					if(d.removeFromPhysicsEngine)
 					{
+						d.removeFromPhysicsEngine=false;
 						collidables.remove(i);
 					}
 				}
@@ -217,89 +217,64 @@ public class PhysicsController extends Thread
 		}
 	}
 	
-	public float[] lineIntersect(float px1, float py1, float px2, float py2, float lx1, float ly1, float lx2, float ly2, float old_ly1, float old_ly2)
+	public Point2D lineIntersect(Point2D p1, Point2D v1, Point2D p2, Point2D v2, Point2D p3, Point2D v3)
 	{
-		float a = px1;			// (* dirt point x *)
-		float b = py1;			// (* dirt point y *)
-		float c = px2 - px1;	// (* dirt point x velocity *)
-		float d = py2 - py1;	// (* dirt point y velocity *)
-		float w = lx2 - lx1;	// (* terrain segment width *)
-		float i = lx1; 			// (* left terrain point x *)
-		float e = old_ly1; 		// (* previous left terrain point y *)
-		float f = old_ly2; 		// (* previous right terrain point y *)
-		float g = ly1;			// (* current left terrain point y *)
-		float h = ly2;			// (* current right terrain point y *)
-		float j = g - e;		// (* change in left terrain point y *)
-		float k = h - f;		// (* change in right terrain point y *)
-
-		if(j == 0 && k == 0)
+		
+		if(v2.x == 0 && v2.y == 0 && v3.x == 0 && v3.y == 0)
 		{
-			// Terrain hasn't moved, perform standard line intersection
-			float denom = (ly2 - ly1) * (px2 - px1) - (lx2 - lx1) * (py2 - py1);
+			// Line segment points haven't moved, perform standard line segment intersect
+			float denom = (p3.y - p2.y) * v1.x - (p3.x-p2.x) * v1.y;
 			if(denom == 0)
 			{
 				return null;
 			}
 			
-			float ua = ((lx2 - lx1) * (py1 - ly1) - (ly2 - ly1) * (px1 - lx1)) / denom;
-			float ub = ((px2 - px1) * (py1 - ly1) - (py2 - py1) * (px1 - lx1)) / denom;
+			float ua = ((p3.x-p2.x) * (p1.y - p2.y) - (p3.y - p2.y) * (p1.x - p2.x)) / denom;
+			float ub = (v1.x * (p1.y - p2.y) - v1.y * (p1.x - p2.x)) / denom;
 			if (ua >= 0 && ua <= 1.0f && ub >= 0 && ub <= 1.0f)
 			{
-				float intersect[] = new float[2];
-				intersect[0] = px1 + ua * (px2 - px1);
-				intersect[1] = py1 + ua * (py2 - py1);
+				Point2D intersect = new Point2D();
+				intersect.x = p1.x + ua * v1.x;
+				intersect.y = p1.y + ua * v1.y;
 				return intersect;
 			}
 			
 			return null;
 		}
 		
-		if(c<=0.000001 && c>=-0.000001)
-		{
-			// dirt is moving straight down, special case
-			float t = (-a*e + a*f + e*i - f*i - b*w + e*w)/(a*j - i*j - a*k + i*k + d*w - j*w);
-			
-			if(t >= 0 && t <= 1)
-			{
-				float intersect[] = new float[2];
-				intersect[0] = px1+c*t;
-				intersect[1] = py1+d*t;
-				
-				return intersect;
-			}
-		}
-		
-		float A = c*j-c*k;
+		float A = v1.y*v2.x - v1.x*v2.y - v1.y*v3.x + v2.y*v3.x + v1.x*v3.y - v2.x*v3.y;
 		
 		if(A == 0)
 		{
 			return null;
 		}
 		
-		float B = c*e - c*f + a*j - i*j - a*k + i*k + d*w - j*w;
-		float C = a*e - a*f - e*i + f*i + b*w - e*w;
+		float B = -p2.y*v1.x + p3.y*v1.x + p2.x*v1.y - p3.x*v1.y + p1.y*v2.x - p3.y*v2.x - p1.x*v2.y + p3.x*v2.y - p1.y*v3.x + p2.y*v3.x + p1.x*v3.y - p2.x*v3.y;
+		float C = p1.y*p2.x - p1.x*p2.y - p1.y*p3.x + p2.y*p3.x + p1.x*p3.y - p2.x*p3.y;
+		float sqrt = (float) Math.sqrt(B*B - 4*A*C);
 		
-		float t1 = (float) ((-B - Math.sqrt(B*B - 4*A*C)) / (2*A));
-		float t2 = (float) ((-B + Math.sqrt(B*B - 4*A*C)) / (2*A));
-		float m1 = (a+c*t1-i)/w;
-		float m2 = (a+c*t2-i)/w;
-		
-		float intersect[] = new float[2];
-		if(t1 >= 0 && t1 <= 1 && m1 >=0 && m1 <= 1)
+		float t = (-B + sqrt) / (2*A);
+		if(t < 0 || t > 1 || Float.isNaN(t)) 
 		{
-			intersect[0] = px1+c*t1;
-			intersect[1] = py1+d*t1;
-
-			return intersect;
+			t = (-B - sqrt) / (2*A);
+			if(t < 0 || t > 1 || Float.isNaN(t))
+			{
+				return null;
+			}
 		}
-		/*else if(t2 >= 0 && t2 <= 1 && m2 >= 0 && m2 <= 1)
+		Point2D intersect = new Point2D(p1.x+v1.x*t, p1.y+v1.y*t);
+		Point2D one = new Point2D(p2.x+v2.x*t, p2.y+v2.y*t);
+		Point2D two = new Point2D(p3.x+v3.x*t, p3.y+v3.y*t);
+		if(!isBetween(intersect.x, one.x, two.x))
 		{
-			System.out.println("2");
-			intersect[0] = px1+c*t2;
-			intersect[1] = py1+d*t2;
-			return intersect;
-		}*/
-		return null;
+			return null;
+		}
+		if(!isBetween(intersect.y, one.y, two.y))
+		{
+			return null;
+		}
+		
+		return intersect;
 	}
 	
 	public void addCollidable(Drawable c)
@@ -319,8 +294,17 @@ public class PhysicsController extends Thread
 		
 	}
 
-	public boolean hasCollidable(Drawable tank)
+	public boolean hasCollidable(Drawable d)
 	{
-		return collidables.contains(tank);
+		synchronized (collidables) 
+		{
+			return collidables.contains(d);
+		}
+	}
+	
+	// Return true if c is between a and b.
+	public static boolean isBetween(float c, float a, float b) 
+	{
+	    return b > a ? c > a && c < b : c > b && c < a;
 	}
 }
