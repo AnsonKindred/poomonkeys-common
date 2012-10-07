@@ -71,144 +71,186 @@ public class PhysicsController extends Thread
 			}
 			try
 			{
-				Thread.currentThread().sleep(5000);
+				Thread.currentThread().sleep(20);
 			} 
 			catch (InterruptedException e)
 			{
 				e.printStackTrace();
 			}
+			
 			synchronized (collidables) 
 			{ 
-				for (int i = collidables.size()-1; i >= 0; i--)
+				synchronized(t)
 				{
-					Drawable d = collidables.get(i);
-					
-					Point2D totalForce = new Point2D(0, 0);
-					for(int f = 0; f < permanentGlobalForces.size(); f++)
+					for (int i = collidables.size()-1; i >= 0; i--)
 					{
-						Point2D force = permanentGlobalForces.get(f);
-						totalForce.x += force.x;
-						totalForce.y += force.y;
-					}
-					
-					for(int f = 0; f < globalForces.size(); f++)
-					{
-						Point2D force = globalForces.get(f);
-						totalForce.x += force.x;
-						totalForce.y += force.y;
-					}
-					
-					for(int f = 0; f < permanentPointForces.size(); f++)
-					{
-						PointForce force = permanentPointForces.get(f);
-						float distance_factor = (float) (1 / Math.pow(1 + VectorUtil.distance(force, d), 2));
-						Point2D forceDirection = new Point2D(d.x-force.x, d.y-force.y);
-						VectorUtil.scaleTo2D(forceDirection, force.magnitude);
-						totalForce.x += forceDirection.x * distance_factor;
-						totalForce.y += forceDirection.y * distance_factor;
-					}
-					
-					for(int f = 0; f < pointForces.size(); f++)
-					{
-						PointForce force = pointForces.get(f);
-						float distance_factor = (float) (1 / Math.pow(1 + VectorUtil.distance(force, d), 2));
-						Point2D forceDirection = new Point2D(d.x-force.x, d.y-force.y);
-						VectorUtil.scaleTo2D(forceDirection, force.magnitude);
-						totalForce.x += forceDirection.x * distance_factor;
-						totalForce.y += forceDirection.y * distance_factor;
-					}
-					
-					d.a.x = totalForce.x/d.m;
-					d.a.y = totalForce.y/d.m;
-					
-					d.v.x += d.a.x;
-					d.v.y += d.a.y;
-					
-					d.v.y += GRAVITY;
-
-					d.x += d.v.x;
-					d.y += d.v.y;
-					
-					int iFromLeftX = (int) ((d.x-d.width/2)/t.segmentWidth);
-					int iFromRightX = (int) ((d.x+d.width/2)/t.segmentWidth);
-					
-					if(iFromLeftX < 0 || iFromRightX >= t.points.length-1)
-					{
-						d.removeFromGLEngine = true;
-						d.removeFromPhysicsEngine = true;
-					}
-					else
-					{						
-						double leftPercent = ((d.x-d.width/2) % t.segmentWidth) / t.segmentWidth;
-						double rightPercent = ((d.x+d.width/2) % t.segmentWidth) / t.segmentWidth;
-						double landYatLeftX = t.points[iFromLeftX] + (t.points[iFromLeftX + 1] - t.points[iFromLeftX]) * leftPercent;
-						double landYatRightX = t.points[iFromRightX] + (t.points[iFromRightX + 1] - t.points[iFromRightX]) * rightPercent;
+						Drawable d = collidables.get(i);
 						
-						boolean leftIntersected = (d.y-d.height/2) <= landYatLeftX;
-						boolean rightIntersected = (d.y-d.height/2) <= landYatRightX;
-						//int min_index = 0;
-						//int max_index = 0;
-						
-						if(leftIntersected || rightIntersected)
+						Point2D totalForce = new Point2D(0, 0);
+						for(int f = 0; f < permanentGlobalForces.size(); f++)
 						{
+							Point2D force = permanentGlobalForces.get(f);
+							totalForce.x += force.x;
+							totalForce.y += force.y;
+						}
 						
-							//if(leftIntersected)
-							//{
-								//int iFromPreviousLeftX = (int) ((d.x - d.width/2 - d.v.x)/t.segmentWidth);
-								//min_index = iFromPreviousLeftX;
-								//max_index = iFromLeftX;
-								Point2D leftPoint = new Point2D(d.x-d.v.x-d.width/2, d.y-d.v.y-d.height/2);
-							//}
-							//else //if(rightIntersected)
-							//{
-								//int iFromPreviousRightX = (int) ((d.x + d.width/2 - d.v.x)/t.segmentWidth);
-								//min_index = iFromPreviousRightX;
-								//max_index = iFromRightX;
-								Point2D rightPoint = new Point2D(d.x-d.v.x+d.width/2, d.y-d.v.y-d.height/2);
-							//}
+						for(int f = 0; f < globalForces.size(); f++)
+						{
+							Point2D force = globalForces.get(f);
+							totalForce.x += force.x;
+							totalForce.y += force.y;
+						}
+						
+						for(int f = 0; f < permanentPointForces.size(); f++)
+						{
+							PointForce force = permanentPointForces.get(f);
+							float distance_factor = (float) (1 / Math.pow(1 + VectorUtil.distance(force, d), 2));
+							Point2D forceDirection = new Point2D(d.x-force.x, d.y-force.y);
+							VectorUtil.scaleTo2D(forceDirection, force.magnitude);
+							totalForce.x += forceDirection.x * distance_factor;
+							totalForce.y += forceDirection.y * distance_factor;
+						}
+						
+						for(int f = 0; f < pointForces.size(); f++)
+						{
+							PointForce force = pointForces.get(f);
+							float distance_factor = (float) (1 / Math.pow(1 + VectorUtil.distance(force, d), 2));
+							Point2D forceDirection = new Point2D(d.x-force.x, d.y-force.y);
+							VectorUtil.scaleTo2D(forceDirection, force.magnitude);
+							totalForce.x += forceDirection.x * distance_factor;
+							totalForce.y += forceDirection.y * distance_factor;
+						}
+						
+						d.a.x = totalForce.x/d.m;
+						d.a.y = totalForce.y/d.m;
+						
+						d.v.x += d.a.x;
+						d.v.y += d.a.y;
+						
+						d.v.y += GRAVITY;
+	
+						d.x += d.v.x;
+						d.y += d.v.y;
+						
+						int iFromLeftX = (int) ((d.x-d.width/2)/t.segmentWidth);
+						int iFromRightX = (int) ((d.x+d.width/2)/t.segmentWidth);
+						
+						if(iFromLeftX < 0 || iFromRightX >= t.points.length-1)
+						{
+							d.removeFromGLEngine = true;
+							d.removeFromPhysicsEngine = true;
+						}
+						else
+						{						
+							double leftPercent = ((d.x-d.width/2) % t.segmentWidth) / t.segmentWidth;
+							double rightPercent = ((d.x+d.width/2) % t.segmentWidth) / t.segmentWidth;
+							double landYatLeftX = t.points[iFromLeftX] + (t.points[iFromLeftX + 1] - t.points[iFromLeftX]) * leftPercent;
+							double landYatRightX = t.points[iFromRightX] + (t.points[iFromRightX + 1] - t.points[iFromRightX]) * rightPercent;
 							
-							/*if(min_index > max_index)
-							{
-								int temp = min_index;
-								min_index = max_index;
-								max_index = temp;
-							}*/
+							boolean leftIntersected = (d.y-d.height/2) <= landYatLeftX;
+							boolean rightIntersected = (d.y-d.height/2) <= landYatRightX;
 							
-							for(int s = 0; s <= t.NUM_POINTS-2; s++)
+							if(leftIntersected || rightIntersected)
 							{
-								float xFromIndex = s*t.segmentWidth;
-								float xFromNextIndex = (s+1)*t.segmentWidth;
+							
+								//if(leftIntersected)
+								//{
+									int iFromPreviousLeftX = (int) ((d.x - d.width/2 - d.v.x)/t.segmentWidth);
+									int left_min_index = iFromPreviousLeftX;
+									int left_max_index = iFromLeftX;
+									Point2D leftPoint = new Point2D(d.x-d.v.x-d.width/2, d.y-d.v.y-d.height/2);
+								//}
+								//else //if(rightIntersected)
+								//{
+									int iFromPreviousRightX = (int) ((d.x + d.width/2 - d.v.x)/t.segmentWidth);
+									int right_min_index = iFromPreviousRightX;
+									int right_max_index = iFromRightX;
+									Point2D rightPoint = new Point2D(d.x-d.v.x+d.width/2, d.y-d.v.y-d.height/2);
+								//}
 								
-								Point2D segmentLeft = new Point2D(xFromIndex, t.previousPoints[s]);
-								Point2D segmentLeftV = new Point2D(0, t.points[s]-t.previousPoints[s]);
-								Point2D segmentRight = new Point2D(xFromNextIndex, t.previousPoints[s+1]);
-								Point2D segmentRightV = new Point2D(0, t.points[s+1]-t.previousPoints[s+1]);
-								
-								Point2D intersectLeft = lineIntersect(leftPoint, d.v, segmentLeft, segmentLeftV, segmentRight, segmentRightV);
-								Point2D intersectRight = lineIntersect(rightPoint, d.v, segmentLeft, segmentLeftV, segmentRight, segmentRightV);
-								if(intersectLeft != null)
+								if(left_min_index > left_max_index)
 								{
-									d.intersectTerrain(t, leftPoint.x, leftPoint.y);
-									break;
+									int temp = left_min_index;
+									left_min_index = left_max_index;
+									left_max_index = temp;
 								}
-								else if(intersectRight != null)
+								if(right_min_index > right_max_index)
 								{
-									d.intersectTerrain(t, rightPoint.x, rightPoint.y);
-									break;
+									int temp = right_min_index;
+									right_min_index = right_max_index;
+									right_max_index = temp;
+								}
+								
+								for(int s = 0; s <= t.NUM_POINTS-2; s++)
+								{
+									float xFromIndex = s*t.segmentWidth;
+									float xFromNextIndex = (s+1)*t.segmentWidth;
+									
+									Point2D segmentLeft = new Point2D(xFromIndex, t.previousPoints[s]);
+									Point2D segmentLeftV = new Point2D(0, t.points[s]-t.previousPoints[s]);
+									Point2D segmentRight = new Point2D(xFromNextIndex, t.previousPoints[s+1]);
+									Point2D segmentRightV = new Point2D(0, t.points[s+1]-t.previousPoints[s+1]);
+									
+									Point2D intersectLeft = lineIntersect(leftPoint, d.v, segmentLeft, segmentLeftV, segmentRight, segmentRightV);
+									Point2D intersectRight = lineIntersect(rightPoint, d.v, segmentLeft, segmentLeftV, segmentRight, segmentRightV);
+									if(intersectLeft != null)
+									{
+										d.intersectTerrain(t, intersectLeft.x, intersectLeft.y);
+										break;
+									}
+									else if(intersectRight != null)
+									{
+										d.intersectTerrain(t, intersectRight.x, intersectRight.y);
+										break;
+									}
+								}
+	
+								if(!d.removeFromPhysicsEngine)
+								{
+									if(leftIntersected)
+									{
+										for(int s = left_min_index; s <= left_max_index; s++)
+										{
+											float xFromIndex = s*t.segmentWidth;
+											float xFromNextIndex = (s+1)*t.segmentWidth;
+											System.out.println("(" + xFromIndex + ", " + t.previousPoints[s] + ")-(" + xFromNextIndex + ", " + t.previousPoints[s+1]+")");
+											System.out.println("<0, " + (t.points[s] - t.previousPoints[s]) + ">-<0, " + (t.points[s+1] - t.previousPoints[s+1])+">");
+											Point2D segmentLeft = new Point2D(xFromIndex, t.previousPoints[s]);
+											Point2D segmentLeftV = new Point2D(0, t.points[s]-t.previousPoints[s]);
+											Point2D segmentRight = new Point2D(xFromNextIndex, t.previousPoints[s+1]);
+											Point2D segmentRightV = new Point2D(0, t.points[s+1]-t.previousPoints[s+1]);
+											Point2D intersectLeft = lineIntersect(leftPoint, d.v, segmentLeft, segmentLeftV, segmentRight, segmentRightV);
+										}
+										System.out.println((d.x-d.width/2-d.v.x) + ", " + (d.y-d.height/2-d.v.y) + ", " + d.v.x + ", " + d.v.y);
+									}
+									if(rightIntersected)
+									{
+										for(int s = right_min_index; s <= right_max_index; s++)
+										{
+											float xFromIndex = s*t.segmentWidth;
+											float xFromNextIndex = (s+1)*t.segmentWidth;
+											System.out.println("(" + xFromIndex + ", " + t.previousPoints[s] + ")-(" + xFromNextIndex + ", " + t.previousPoints[s+1]+")");
+											System.out.println("<0, " + (t.points[s] - t.previousPoints[s]) + ">-<0, " + (t.points[s+1] - t.previousPoints[s+1])+">");
+											Point2D segmentLeft = new Point2D(xFromIndex, t.previousPoints[s]);
+											Point2D segmentLeftV = new Point2D(0, t.points[s]-t.previousPoints[s]);
+											Point2D segmentRight = new Point2D(xFromNextIndex, t.previousPoints[s+1]);
+											Point2D segmentRightV = new Point2D(0, t.points[s+1]-t.previousPoints[s+1]);
+											Point2D intersectRight = lineIntersect(rightPoint, d.v, segmentLeft, segmentLeftV, segmentRight, segmentRightV);
+										}
+										System.out.println((d.x+d.width/2-d.v.x) + ", " + (d.y-d.height/2-d.v.y) + ", " + d.v.x + ", " + d.v.y);
+									}
+									
+									System.exit(0);
+									//d.intersectTerrain(t, d.x-d.v.x, d.y-d.v.y);
 								}
 							}
-
-							/*if(!d.removeFromPhysicsEngine)
-							{
-								d.intersectTerrain(t, d.x, d.y);
-							}*/
 						}
-					}
-					
-					if(d.removeFromPhysicsEngine)
-					{
-						d.removeFromPhysicsEngine=false;
-						collidables.remove(i);
+						
+						if(d.removeFromPhysicsEngine)
+						{
+							d.removeFromPhysicsEngine=false;
+							collidables.remove(i);
+						}
 					}
 				}
 			}
@@ -222,7 +264,7 @@ public class PhysicsController extends Thread
 	
 	public Point2D lineIntersect(Point2D p1, Point2D v1, Point2D p2, Point2D v2, Point2D p3, Point2D v3)
 	{
-		float EPSILON = .00001f;
+		float EPSILON = .0001f;
 		
 		if(v2.x == 0 && v2.y == 0 && v3.x == 0 && v3.y == 0)
 		{
@@ -235,6 +277,8 @@ public class PhysicsController extends Thread
 			
 			float ua = ((p3.x-p2.x) * (p1.y - p2.y) - (p3.y - p2.y) * (p1.x - p2.x)) / denom;
 			float ub = (v1.x * (p1.y - p2.y) - v1.y * (p1.x - p2.x)) / denom;
+			//System.out.println("ua" + ua);
+			//System.out.println("ub" + ub);
 			if (ua >= 0-EPSILON && ua <= 1.0f+EPSILON && ub >= 0-EPSILON && ub <= 1.0f+EPSILON)
 			{
 				Point2D intersect = new Point2D();
@@ -244,6 +288,59 @@ public class PhysicsController extends Thread
 			}
 			
 			return null;
+		}
+		
+		if(v1.x > -EPSILON && v1.x < EPSILON && v2.x > -EPSILON && v2.x < EPSILON && v3.x > -EPSILON && v3.x < EPSILON)
+		{
+			// Line segment and point both moving vertically, special case
+			float denom = -p2.x+p3.x; 
+			float dif = p1.x - p2.x;
+			float t = (-p1.y + p2.y - (dif*p2.y)/denom + (dif*p3.y)/denom)/(v1.y - v2.y + (dif*v2.y)/denom - (dif*v3.y)/denom);
+			if(t >= 0-EPSILON && t <= 1+EPSILON)
+			{
+				Point2D intersect = new Point2D(p1.x+v1.x*t, p1.y+v1.y*t);
+				return intersect;
+			}
+			return null;
+		}
+		
+		if(v2.x > -EPSILON && v2.x < EPSILON && v3.x > -EPSILON && v3.x < EPSILON)
+		{
+			if(v2.y == v3.y)
+			{
+				// even specialer case
+				float denom = -p2.x+p3.x; 
+				float dif = -p2.y + p3.y;
+				
+				float t = (-p1.y + p2.y + p1.x*dif/denom - p2.x*dif/denom)/(-v1.x*dif/denom + v1.y - v2.y);
+				//System.out.println("A" + t);
+				if(t >= 0-EPSILON && t <= 1+EPSILON)
+				{
+					Point2D intersect = new Point2D(p1.x+v1.x*t, p1.y+v1.y*t);
+					return intersect;
+				}
+				return null;
+			}
+			double A = -v1.x*v2.y + v1.x*v3.y;
+			double B = -p2.y*v1.x + p3.y*v1.x + p2.x*v1.y - p3.x*v1.y - p1.x*v2.y + p3.x*v2.y + p1.x*v3.y - p2.x*v3.y;
+			double C = p1.y*p2.x - p1.x*p2.y - p1.y*p3.x + p2.y*p3.x + p1.x*p3.y - p2.x*p3.y;
+			double sqrt = Math.sqrt(B*B - 4*A*C);
+			double t = (-B + sqrt) / (2*A);
+
+			//System.out.println("B" + t);
+			if(t < -EPSILON || t > 1+EPSILON || Double.isNaN(t)) 
+			{
+				t = (-B - sqrt) / (2*A);
+
+				//System.out.println("C" + t);
+				if(t < -EPSILON || t > 1+EPSILON || Double.isNaN(t))
+				{
+					return null;
+				}
+			}
+			
+			Point2D intersect = new Point2D((float)(p1.x+v1.x*t), (float)(p1.y+v1.y*t));
+			return intersect;
 		}
 		
 		float A = v1.y*v2.x - v1.x*v2.y - v1.y*v3.x + v2.y*v3.x + v1.x*v3.y - v2.x*v3.y;
@@ -258,17 +355,21 @@ public class PhysicsController extends Thread
 		float sqrt = (float) Math.sqrt(B*B - 4*A*C);
 				
 		float t = (-B + sqrt) / (2*A);
-		if(t < 0-EPSILON || t > 1+EPSILON || Float.isNaN(t)) 
+		//System.out.println("D" + t);
+		if(t < -EPSILON || t > 1+EPSILON || Float.isNaN(t)) 
 		{
 			t = (-B - sqrt) / (2*A);
-			if(t < 0-EPSILON || t > 1+EPSILON || Float.isNaN(t))
+			//System.out.println("E" + t);
+			if(t < -EPSILON || t > 1+EPSILON || Float.isNaN(t))
 			{
 				return null;
 			}
 		}
+		
 		Point2D intersect = new Point2D(p1.x+v1.x*t, p1.y+v1.y*t);
 		Point2D one = new Point2D(p2.x+v2.x*t, p2.y+v2.y*t);
 		Point2D two = new Point2D(p3.x+v3.x*t, p3.y+v3.y*t);
+		
 		if(!isBetween(intersect.x, one.x, two.x, EPSILON))
 		{
 			return null;

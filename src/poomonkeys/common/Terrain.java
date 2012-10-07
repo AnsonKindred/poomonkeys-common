@@ -7,11 +7,12 @@ public class Terrain extends Drawable
 {
 
 	static final int NUM_POINTS = 256;
-	static final float DIRT_SIZE = 1f;
+	static final float DIRT_SIZE = .2f;
 	float segmentWidth;
 	float points[] = new float[NUM_POINTS];
 	float previousPoints[] = new float[NUM_POINTS];
 	float offsets[] = new float[NUM_POINTS];
+	boolean needsUpdate;
 
 	public Terrain() 
 	{
@@ -50,13 +51,16 @@ public class Terrain extends Drawable
 		int max_index = Math.min(NUM_POINTS - 1, (int) ((x + r) / segmentWidth));
 
 		// The actual x value at the min and max indexes
-		float min_x = min_index * segmentWidth;
-		float max_x = max_index * segmentWidth;
+		float min_x = (min_index+1) * segmentWidth;
+		float max_x = (max_index-1) * segmentWidth;
 		
 		float totalDirtVolume = 0;
-		ArrayList<Dirt> dirt = _generateDirtpoints(min_x, max_x, x, y, r);
-		totalDirtVolume = _collapseToCircleBottom(min_index, max_index, x, y, r);
-
+		ArrayList<Dirt> dirt = null;
+		synchronized(this)
+		{
+			dirt = _generateDirtpoints(min_x, max_x, x, y, r);
+			totalDirtVolume = _collapseToCircleBottom(min_index, max_index, x, y, r);
+		}
 		// Assign a portion of the removed dirt volume to each dirt point
 		float individualDirtVolume = totalDirtVolume / dirt.size();
 		for (int d = 0; d < dirt.size(); d++)
@@ -120,8 +124,6 @@ public class Terrain extends Drawable
 				Dirt dirtPoint = new Dirt();
 				dirtPoint.x = col_x;
 				dirtPoint.y = tCircleY + d;
-				float distance = (float) Math.sqrt(Math.pow(dirtPoint.x - x, 2) + Math.pow(dirtPoint.y - y, 2));
-				distance += 1;
 				dirtPoint.width = DIRT_SIZE * 2 + gap;
 				dirtPoint.height = DIRT_SIZE * 2 + gap;
 				dirt.add(dirtPoint);
