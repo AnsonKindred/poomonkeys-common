@@ -268,7 +268,10 @@ public class PhysicsController extends Thread
 		
 
 		// Line segment points haven't moved, perform standard point / line segment intersection
-		if(v2.x == 0 && v2.y == 0 && v3.x == 0 && v3.y == 0)
+		if(v2.x > -EPSILON && v2.x < EPSILON && 
+			v2.y > -EPSILON && v2.y < EPSILON && 
+			v3.x > -EPSILON && v3.x < EPSILON && 
+			v3.y > -EPSILON && v3.y < EPSILON)
 		{
 			float denom = -p2.x + p3.x;
 			float dif = -p2.y + p3.y;
