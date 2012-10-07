@@ -69,6 +69,14 @@ public class PhysicsController extends Thread
 				}
 				continue;
 			}
+			try
+			{
+				Thread.currentThread().sleep(5000);
+			} 
+			catch (InterruptedException e)
+			{
+				e.printStackTrace();
+			}
 			synchronized (collidables) 
 			{ 
 				for (int i = collidables.size()-1; i >= 0; i--)
@@ -136,37 +144,35 @@ public class PhysicsController extends Thread
 						double landYatLeftX = t.points[iFromLeftX] + (t.points[iFromLeftX + 1] - t.points[iFromLeftX]) * leftPercent;
 						double landYatRightX = t.points[iFromRightX] + (t.points[iFromRightX + 1] - t.points[iFromRightX]) * rightPercent;
 						
-						boolean leftIntersected = d.y-d.height/2 <= landYatLeftX;
-						boolean rightIntersected = d.y-d.height/2 <= landYatRightX;
-						
-						int min_index = 0;
-						int max_index = 0;
+						boolean leftIntersected = (d.y-d.height/2) <= landYatLeftX;
+						boolean rightIntersected = (d.y-d.height/2) <= landYatRightX;
+						//int min_index = 0;
+						//int max_index = 0;
 						
 						if(leftIntersected || rightIntersected)
 						{
-							Point2D point = null;
 						
-							if(leftIntersected)
-							{
-								int iFromPreviousLeftX = (int) ((d.x - d.width/2 - d.v.x)/t.segmentWidth);
-								min_index = iFromPreviousLeftX;
-								max_index = iFromLeftX;
-								point = new Point2D(d.x-d.v.x-d.width/2, d.y-d.v.y-d.height/2);
-							}
-							else //if(rightIntersected)
-							{
-								int iFromPreviousRightX = (int) ((d.x + d.width/2 - d.v.x)/t.segmentWidth);
-								min_index = iFromPreviousRightX;
-								max_index = iFromRightX;
-								point = new Point2D(d.x-d.v.x+d.width/2, d.y-d.v.y-d.height/2);
-							}
+							//if(leftIntersected)
+							//{
+								//int iFromPreviousLeftX = (int) ((d.x - d.width/2 - d.v.x)/t.segmentWidth);
+								//min_index = iFromPreviousLeftX;
+								//max_index = iFromLeftX;
+								Point2D leftPoint = new Point2D(d.x-d.v.x-d.width/2, d.y-d.v.y-d.height/2);
+							//}
+							//else //if(rightIntersected)
+							//{
+								//int iFromPreviousRightX = (int) ((d.x + d.width/2 - d.v.x)/t.segmentWidth);
+								//min_index = iFromPreviousRightX;
+								//max_index = iFromRightX;
+								Point2D rightPoint = new Point2D(d.x-d.v.x+d.width/2, d.y-d.v.y-d.height/2);
+							//}
 							
-							if(min_index > max_index)
+							/*if(min_index > max_index)
 							{
 								int temp = min_index;
 								min_index = max_index;
 								max_index = temp;
-							}
+							}*/
 							
 							for(int s = 0; s <= t.NUM_POINTS-2; s++)
 							{
@@ -175,13 +181,19 @@ public class PhysicsController extends Thread
 								
 								Point2D segmentLeft = new Point2D(xFromIndex, t.previousPoints[s]);
 								Point2D segmentLeftV = new Point2D(0, t.points[s]-t.previousPoints[s]);
-								Point2D segmentRight = new Point2D(xFromNextIndex, t.points[s+1]);
+								Point2D segmentRight = new Point2D(xFromNextIndex, t.previousPoints[s+1]);
 								Point2D segmentRightV = new Point2D(0, t.points[s+1]-t.previousPoints[s+1]);
-								Point2D intersect = lineIntersect(point, d.v, segmentLeft, segmentLeftV, segmentRight, segmentRightV);
-								if(intersect != null)
+								
+								Point2D intersectLeft = lineIntersect(leftPoint, d.v, segmentLeft, segmentLeftV, segmentRight, segmentRightV);
+								Point2D intersectRight = lineIntersect(rightPoint, d.v, segmentLeft, segmentLeftV, segmentRight, segmentRightV);
+								if(intersectLeft != null)
 								{
-									System.out.println(intersect.x + ", " + intersect.y);
-									d.intersectTerrain(t, intersect.x, intersect.y);
+									d.intersectTerrain(t, leftPoint.x, leftPoint.y);
+									break;
+								}
+								else if(intersectRight != null)
+								{
+									d.intersectTerrain(t, rightPoint.x, rightPoint.y);
 									break;
 								}
 							}
@@ -205,20 +217,12 @@ public class PhysicsController extends Thread
 			
 			globalForces.clear();
 			pointForces.clear();
-			
-			try
-			{
-				Thread.currentThread().sleep(20);
-			} 
-			catch (InterruptedException e)
-			{
-				e.printStackTrace();
-			}
 		}
 	}
 	
 	public Point2D lineIntersect(Point2D p1, Point2D v1, Point2D p2, Point2D v2, Point2D p3, Point2D v3)
 	{
+		float EPSILON = .00001f;
 		
 		if(v2.x == 0 && v2.y == 0 && v3.x == 0 && v3.y == 0)
 		{
@@ -231,7 +235,7 @@ public class PhysicsController extends Thread
 			
 			float ua = ((p3.x-p2.x) * (p1.y - p2.y) - (p3.y - p2.y) * (p1.x - p2.x)) / denom;
 			float ub = (v1.x * (p1.y - p2.y) - v1.y * (p1.x - p2.x)) / denom;
-			if (ua >= 0 && ua <= 1.0f && ub >= 0 && ub <= 1.0f)
+			if (ua >= 0-EPSILON && ua <= 1.0f+EPSILON && ub >= 0-EPSILON && ub <= 1.0f+EPSILON)
 			{
 				Point2D intersect = new Point2D();
 				intersect.x = p1.x + ua * v1.x;
@@ -252,12 +256,12 @@ public class PhysicsController extends Thread
 		float B = -p2.y*v1.x + p3.y*v1.x + p2.x*v1.y - p3.x*v1.y + p1.y*v2.x - p3.y*v2.x - p1.x*v2.y + p3.x*v2.y - p1.y*v3.x + p2.y*v3.x + p1.x*v3.y - p2.x*v3.y;
 		float C = p1.y*p2.x - p1.x*p2.y - p1.y*p3.x + p2.y*p3.x + p1.x*p3.y - p2.x*p3.y;
 		float sqrt = (float) Math.sqrt(B*B - 4*A*C);
-		
+				
 		float t = (-B + sqrt) / (2*A);
-		if(t < 0 || t > 1 || Float.isNaN(t)) 
+		if(t < 0-EPSILON || t > 1+EPSILON || Float.isNaN(t)) 
 		{
 			t = (-B - sqrt) / (2*A);
-			if(t < 0 || t > 1 || Float.isNaN(t))
+			if(t < 0-EPSILON || t > 1+EPSILON || Float.isNaN(t))
 			{
 				return null;
 			}
@@ -265,11 +269,11 @@ public class PhysicsController extends Thread
 		Point2D intersect = new Point2D(p1.x+v1.x*t, p1.y+v1.y*t);
 		Point2D one = new Point2D(p2.x+v2.x*t, p2.y+v2.y*t);
 		Point2D two = new Point2D(p3.x+v3.x*t, p3.y+v3.y*t);
-		if(!isBetween(intersect.x, one.x, two.x))
+		if(!isBetween(intersect.x, one.x, two.x, EPSILON))
 		{
 			return null;
 		}
-		if(!isBetween(intersect.y, one.y, two.y))
+		if(!isBetween(intersect.y, one.y, two.y, EPSILON))
 		{
 			return null;
 		}
@@ -303,8 +307,8 @@ public class PhysicsController extends Thread
 	}
 	
 	// Return true if c is between a and b.
-	public static boolean isBetween(float c, float a, float b) 
+	public static boolean isBetween(float c, float a, float b, float EPSILON) 
 	{
-	    return b > a ? c > a && c < b : c > b && c < a;
+	    return b > a ? c >= a-EPSILON && c <= b+EPSILON : c >= b-EPSILON && c <= a+EPSILON;
 	}
 }

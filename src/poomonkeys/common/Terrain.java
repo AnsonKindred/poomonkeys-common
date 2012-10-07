@@ -7,7 +7,7 @@ public class Terrain extends Drawable
 {
 
 	static final int NUM_POINTS = 256;
-	static final float DIRT_SIZE = .2f;
+	static final float DIRT_SIZE = 1f;
 	float segmentWidth;
 	float points[] = new float[NUM_POINTS];
 	float previousPoints[] = new float[NUM_POINTS];
@@ -190,5 +190,19 @@ public class Terrain extends Drawable
 			baseGeometry[i*3+2] = 0;
 		}
 		drawMode = GL2.GL_LINE_STRIP;
+	}
+
+	public void dropDirt(float x, float y) 
+	{
+		PhysicsController physicsController = PhysicsController.getInstance(this);
+		Dirt dirtPoint = new Dirt();
+		dirtPoint.x = x;
+		dirtPoint.y = y;
+		dirtPoint.v.y = -1;
+		dirtPoint.width = DIRT_SIZE;
+		dirtPoint.height = DIRT_SIZE;
+		dirtPoint.volume = 1;
+		physicsController.addCollidable(dirtPoint);
+		registerDrawable(dirtPoint);
 	}
 }
