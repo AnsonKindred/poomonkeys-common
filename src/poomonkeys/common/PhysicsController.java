@@ -266,37 +266,49 @@ public class PhysicsController extends Thread
 	{
 		float EPSILON = .0001f;
 		
+
+		// Line segment points haven't moved, perform standard point / line segment intersection
 		if(v2.x == 0 && v2.y == 0 && v3.x == 0 && v3.y == 0)
 		{
-			// Line segment points haven't moved, perform standard line segment intersect
-			float denom = (p3.y - p2.y) * v1.x - (p3.x-p2.x) * v1.y;
+			float denom = -p2.x + p3.x;
+			float dif = -p2.y + p3.y;
+			float t = (-p1.y + p2.y + p1.x*dif/denom - p2.x*dif/denom) / (-v1.x*dif/denom + v1.y);
+			
+			if(t >= -EPSILON && t <= 1+EPSILON)
+			{
+				Point2D intersect = new Point2D(p1.x+v1.x*t, p1.y+v1.y*t);
+				return intersect;
+			}
+			
+			//System.out.println("Z " + t);
+			
+			return null;
+			
+			/*float denom = (p3.y - p2.y) * v1.x - (p3.x-p2.x)*v1.y;
 			if(denom == 0)
 			{
 				return null;
 			}
 			
-			float ua = ((p3.x-p2.x) * (p1.y - p2.y) - (p3.y - p2.y) * (p1.x - p2.x)) / denom;
-			float ub = (v1.x * (p1.y - p2.y) - v1.y * (p1.x - p2.x)) / denom;
-			//System.out.println("ua" + ua);
-			//System.out.println("ub" + ub);
-			if (ua >= 0-EPSILON && ua <= 1.0f+EPSILON && ub >= 0-EPSILON && ub <= 1.0f+EPSILON)
+			float ua = ((p3.x-p2.x)*(p1.y - p2.y) - (p3.y - p2.y)*(p1.x - p2.x)) / denom;
+			float ub = (v1.x*(p1.y - p2.y) - v1.y*(p1.x - p2.x)) / denom;
+			if (ua >= -EPSILON && ua <= 1.0f+EPSILON && ub >= -EPSILON && ub <= 1.0f+EPSILON)
 			{
-				Point2D intersect = new Point2D();
-				intersect.x = p1.x + ua * v1.x;
-				intersect.y = p1.y + ua * v1.y;
-				return intersect;
+				return new Point2D(p1.x + ua*v1.x, p1.y + ua*v1.y);
 			}
-			
-			return null;
+
+			System.out.println("ua" + ua);
+			System.out.println("ub" + ub);
+			return null;*/
 		}
-		
+
+		// Line segment and point both moving vertically
 		if(v1.x > -EPSILON && v1.x < EPSILON && v2.x > -EPSILON && v2.x < EPSILON && v3.x > -EPSILON && v3.x < EPSILON)
 		{
-			// Line segment and point both moving vertically, special case
 			float denom = -p2.x+p3.x; 
 			float dif = p1.x - p2.x;
 			float t = (-p1.y + p2.y - (dif*p2.y)/denom + (dif*p3.y)/denom)/(v1.y - v2.y + (dif*v2.y)/denom - (dif*v3.y)/denom);
-			if(t >= 0-EPSILON && t <= 1+EPSILON)
+			if(t >= -EPSILON && t <= 1+EPSILON)
 			{
 				Point2D intersect = new Point2D(p1.x+v1.x*t, p1.y+v1.y*t);
 				return intersect;
@@ -304,45 +316,67 @@ public class PhysicsController extends Thread
 			return null;
 		}
 		
+		// Line segment end points moving vertically
 		if(v2.x > -EPSILON && v2.x < EPSILON && v3.x > -EPSILON && v3.x < EPSILON)
 		{
-			if(v2.y == v3.y)
+			// Both end points moving vertically at the same velocity (I can't believe I need special code for this...)
+			if(Math.abs(v2.y - v3.y) < EPSILON)
 			{
-				// even specialer case
 				float denom = -p2.x+p3.x; 
 				float dif = -p2.y + p3.y;
 				
 				float t = (-p1.y + p2.y + p1.x*dif/denom - p2.x*dif/denom)/(-v1.x*dif/denom + v1.y - v2.y);
-				//System.out.println("A" + t);
 				if(t >= 0-EPSILON && t <= 1+EPSILON)
 				{
 					Point2D intersect = new Point2D(p1.x+v1.x*t, p1.y+v1.y*t);
 					return intersect;
 				}
+
+				System.out.println("A" + t);
 				return null;
 			}
+			
+			// End points moving vertically at different velocities
 			double A = -v1.x*v2.y + v1.x*v3.y;
 			double B = -p2.y*v1.x + p3.y*v1.x + p2.x*v1.y - p3.x*v1.y - p1.x*v2.y + p3.x*v2.y + p1.x*v3.y - p2.x*v3.y;
 			double C = p1.y*p2.x - p1.x*p2.y - p1.y*p3.x + p2.y*p3.x + p1.x*p3.y - p2.x*p3.y;
 			double sqrt = Math.sqrt(B*B - 4*A*C);
 			double t = (-B + sqrt) / (2*A);
 
-			//System.out.println("B" + t);
+			System.out.println("B" + t);			
+			System.out.println("a" + A);
+			System.out.println("b" + B);
+			System.out.println("c" + C);
 			if(t < -EPSILON || t > 1+EPSILON || Double.isNaN(t)) 
 			{
 				t = (-B - sqrt) / (2*A);
-
-				//System.out.println("C" + t);
 				if(t < -EPSILON || t > 1+EPSILON || Double.isNaN(t))
 				{
+					System.out.println("C" + t);
 					return null;
 				}
 			}
 			
+			// make sure the intersection lies on the line segment
 			Point2D intersect = new Point2D((float)(p1.x+v1.x*t), (float)(p1.y+v1.y*t));
+			Point2D one = new Point2D((float)(p2.x+v2.x*t), (float)(p2.y+v2.y*t));
+			Point2D two = new Point2D((float)(p3.x+v3.x*t), (float)(p3.y+v3.y*t));
+			System.out.println(intersect.x + ", " + intersect.y);
+			System.out.println(one.x + ", " + one.y);
+			System.out.println(two.x + ", " + two.y);
+			if(!isBetween(intersect.x, one.x, two.x, EPSILON))
+			{
+				return null;
+			}
+			if(!isBetween(intersect.y, one.y, two.y, EPSILON))
+			{
+				return null;
+			}
+			
 			return intersect;
 		}
 		
+		// End points of line segment moving in x and y, point also moving
 		float A = v1.y*v2.x - v1.x*v2.y - v1.y*v3.x + v2.y*v3.x + v1.x*v3.y - v2.x*v3.y;
 		
 		if(A == 0)
@@ -355,17 +389,19 @@ public class PhysicsController extends Thread
 		float sqrt = (float) Math.sqrt(B*B - 4*A*C);
 				
 		float t = (-B + sqrt) / (2*A);
-		//System.out.println("D" + t);
+		
+		// make sure the intersection happens within one time step
 		if(t < -EPSILON || t > 1+EPSILON || Float.isNaN(t)) 
 		{
 			t = (-B - sqrt) / (2*A);
-			//System.out.println("E" + t);
+			
 			if(t < -EPSILON || t > 1+EPSILON || Float.isNaN(t))
 			{
 				return null;
 			}
 		}
 		
+		// make sure the intersection lies on the line segment
 		Point2D intersect = new Point2D(p1.x+v1.x*t, p1.y+v1.y*t);
 		Point2D one = new Point2D(p2.x+v2.x*t, p2.y+v2.y*t);
 		Point2D two = new Point2D(p3.x+v3.x*t, p3.y+v3.y*t);
