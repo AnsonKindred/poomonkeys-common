@@ -38,10 +38,10 @@ public class Dirt extends Drawable
 		index = Math.max(0, index);
 		index = Math.min(t.points.length - 1, index);
 		// t.offsets[index] += this.volume;
-		addDirt(t, index, x);
+		addDirt(t, index, x, true);
 	}
 
-	public void addDirt(Terrain t, int index, float x)
+	public void addDirt(Terrain t, int index, float x, boolean firstTime)
 	{
 		if (index < 1 || index > t.NUM_POINTS - 2)
 		{
@@ -58,28 +58,41 @@ public class Dirt extends Drawable
 		float leftHeight = t.points[index - 1] + t.offsets[index - 1];
 		float rightHeight = t.points[index + 1] + t.offsets[index + 1];
 
-		if (currentHeight > rightHeight)// && x > index * t.segmentWidth)
+		if (currentHeight > rightHeight && (leftHeight >= rightHeight || firstTime == false))
 		{
+			//System.out.println("C>R " + firstTime);
 			float segmentLength = (float) Math.sqrt(Math.pow((index + 1) * t.segmentWidth - index * t.segmentWidth, 2)
 					+ Math.pow(rightHeight - currentHeight, 2));
-			float slopeFactor = Math.min(.1f, (currentHeight - rightHeight) / segmentLength);
-			t.offsets[index] += (this.volume - (this.volume) * slopeFactor) / 5;
-			this.volume -= (this.volume - (this.volume) * slopeFactor) / 5;
-			addDirt(t, index + 1, x);
-		} else if (currentHeight > leftHeight)// && x < index * t.segmentWidth)
+			float slopeFactor = Math.min(.5f, (currentHeight - rightHeight) / segmentLength);
+			t.offsets[index + 1] += (this.volume - (this.volume) * slopeFactor) / 3;
+			this.volume -= (this.volume - (this.volume) * slopeFactor) / 3;
+			addDirt(t, index + 1, x, false);
+			return;
+		} 
+		if (currentHeight > leftHeight && (rightHeight >= leftHeight || firstTime == false))
 		{
+			//System.out.println("C>L " + firstTime);
 			float segmentLength = (float) Math.sqrt(Math.pow((index - 1) * t.segmentWidth - index * t.segmentWidth, 2)
 					+ Math.pow(leftHeight - currentHeight, 2));
-			float slopeFactor = Math.min(.1f, (currentHeight - leftHeight) / segmentLength);
-			t.offsets[index] += (this.volume - (this.volume) * slopeFactor) / 5;
-			this.volume -= (this.volume - (this.volume) * slopeFactor) / 5;
-			addDirt(t, index - 1, x);
-		} else
+			float slopeFactor = Math.min(.5f, (currentHeight - leftHeight) / segmentLength);
+			t.offsets[index - 1] += (this.volume - (this.volume) * slopeFactor) / 3;
+			this.volume -= (this.volume - (this.volume) * slopeFactor) / 3;
+			addDirt(t, index - 1, x, false);
+			return;
+		} 
+		if (currentHeight <= leftHeight && currentHeight <= rightHeight)
 		// current point is lower than neighbors
 		{
-			t.offsets[index] += this.volume / .1;
-			this.volume -= this.volume / .1;
-			addDirt(t, index, x);
+			t.offsets[index] += this.volume / 1;
+			this.volume -= this.volume / 1;
+			addDirt(t, index, x, false);
+			return;
 		}
+		System.out.println("cHeight " + currentHeight);
+		System.out.println("rHeight " + rightHeight);
+		System.out.println("lHeight " + leftHeight);
+		System.out.println(firstTime);
+		System.out.println("x " + x/t.segmentWidth);
+		System.out.println(index);
 	}
 }
