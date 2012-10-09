@@ -47,16 +47,14 @@ public class Tank extends Drawable
 	public void intersectTerrain(Terrain t, float[] intersect)
 	{
 		removeFromPhysicsEngine = true;
-		this.x -= this.v.x*(1-intersect[2]);
-		this.y -= this.v.y*(1-intersect[2]);
+		this.x += this.v.x*intersect[2];
+		this.y += this.v.y*intersect[2];
 		this.v.x = 0;
 		this.v.y = 0;
 	}
 	
 	public void underTerrain()
 	{
-		this.x -= this.v.x;
-		this.y -= this.v.y;
 		this.v.x = 0;
 		this.v.y = 0;
 	}

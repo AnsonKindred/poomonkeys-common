@@ -140,11 +140,10 @@ public class Drawable extends Point2D
 		for(int i=0; i < drawables.size(); i++) drawables.get(i).dispose();
 	}
 	
-	public void reshape(int x, int y, int width, int height) 
+	public void reshape(float width, float height) 
 	{
 		buildGeometry(width, height);
 		finalizeGeometry();
-		for(int i=0; i < drawables.size(); i++) drawables.get(i).reshape(x, y, width, height);
 	}
 
 	public FloatBuffer getGeometry() 
@@ -157,7 +156,7 @@ public class Drawable extends Point2D
 		return baseGeometry.length/3;
 	}
 	
-    public void addGLClickListener(GLClickListener listener) 
+    public void addGLClickListener(GLClickListener listener)
     {
         listenerList.add(listener);
     }

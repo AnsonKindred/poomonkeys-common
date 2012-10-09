@@ -79,7 +79,6 @@ public class PhysicsController extends Thread
 				e.printStackTrace();
 			}
 			
-			
 			synchronized (collidables) 
 			{ 
 				synchronized(t)
@@ -129,12 +128,12 @@ public class PhysicsController extends Thread
 						d.v.y += d.a.y;
 						
 						d.v.y += GRAVITY;
-	
-						d.x += d.v.x;
-						d.y += d.v.y;
 						
-						int iFromLeftX = (int) ((d.x-d.width/2)/t.segmentWidth);
-						int iFromRightX = (int) ((d.x+d.width/2)/t.segmentWidth);
+						float next_x = d.x + d.v.x;
+						float next_y = d.y + d.v.y;
+						
+						int iFromLeftX = (int) ((next_x-d.width/2)/t.segmentWidth);
+						int iFromRightX = (int) ((next_x+d.width/2)/t.segmentWidth);
 						
 						if(iFromLeftX < 0 || iFromRightX >= t.points.length-1)
 						{
@@ -143,23 +142,23 @@ public class PhysicsController extends Thread
 						}
 						else
 						{						
-							double leftPercent = ((d.x-d.width/2) % t.segmentWidth) / t.segmentWidth;
-							double rightPercent = ((d.x+d.width/2) % t.segmentWidth) / t.segmentWidth;
+							double leftPercent = ((next_x-d.width/2) % t.segmentWidth) / t.segmentWidth;
+							double rightPercent = ((next_x+d.width/2) % t.segmentWidth) / t.segmentWidth;
 							double landYatLeftX = t.points[iFromLeftX] + (t.points[iFromLeftX + 1] - t.points[iFromLeftX]) * leftPercent;
 							double landYatRightX = t.points[iFromRightX] + (t.points[iFromRightX + 1] - t.points[iFromRightX]) * rightPercent;
 							
-							boolean leftIntersected = (d.y-d.height/2) <= landYatLeftX;
-							boolean rightIntersected = (d.y-d.height/2) <= landYatRightX;
+							boolean leftIntersected = (next_y-d.height/2) <= landYatLeftX;
+							boolean rightIntersected = (next_y-d.height/2) <= landYatRightX;
 							
-							int iFromPreviousLeftX = (int) ((d.x - d.width/2 - d.v.x)/t.segmentWidth);
+							int iFromPreviousLeftX = (int) ((d.x - d.width/2)/t.segmentWidth);
 							int left_min_index = iFromPreviousLeftX;
 							int left_max_index = iFromLeftX;
-							Point2D leftPoint = new Point2D(d.x-d.v.x-d.width/2, d.y-d.v.y-d.height/2);
+							Point2D leftPoint = new Point2D(d.x-d.width/2, d.y-d.height/2);
 								
-							int iFromPreviousRightX = (int) ((d.x + d.width/2 - d.v.x)/t.segmentWidth);
+							int iFromPreviousRightX = (int) ((d.x + d.width/2)/t.segmentWidth);
 							int right_min_index = iFromPreviousRightX;
 							int right_max_index = iFromRightX;
-							Point2D rightPoint = new Point2D(d.x-d.v.x+d.width/2, d.y-d.v.y-d.height/2);
+							Point2D rightPoint = new Point2D(d.x+d.width/2, d.y-d.height/2);
 							
 							if(left_min_index > left_max_index)
 							{
@@ -179,15 +178,19 @@ public class PhysicsController extends Thread
 
 							if(leftIntersected || rightIntersected)
 							{
+								Point2D segmentLeft = null;
+								Point2D segmentLeftV = null;
+								Point2D segmentRight = null;
+								Point2D segmentRightV = null;
 								for(int s = left_min_index; s <= left_max_index; s++)
 								{
 									float xFromIndex = s*t.segmentWidth;
 									float xFromNextIndex = (s+1)*t.segmentWidth;
 									
-									Point2D segmentLeft = new Point2D(xFromIndex, t.previousPoints[s]);
-									Point2D segmentLeftV = new Point2D(0, t.points[s]-t.previousPoints[s]);
-									Point2D segmentRight = new Point2D(xFromNextIndex, t.previousPoints[s+1]);
-									Point2D segmentRightV = new Point2D(0, t.points[s+1]-t.previousPoints[s+1]);
+									segmentLeft = new Point2D(xFromIndex, t.previousPoints[s]);
+									segmentLeftV = new Point2D(0, t.points[s]-t.previousPoints[s]);
+									segmentRight = new Point2D(xFromNextIndex, t.previousPoints[s+1]);
+									segmentRightV = new Point2D(0, t.points[s+1]-t.previousPoints[s+1]);
 									
 									float intersect[] = findCollision(leftPoint, d.v, segmentLeft, segmentLeftV, segmentRight, segmentRightV);
 									if(intersect != null)
@@ -205,10 +208,10 @@ public class PhysicsController extends Thread
 									float xFromIndex = s*t.segmentWidth;
 									float xFromNextIndex = (s+1)*t.segmentWidth;
 									
-									Point2D segmentLeft = new Point2D(xFromIndex, t.previousPoints[s]);
-									Point2D segmentLeftV = new Point2D(0, t.points[s]-t.previousPoints[s]);
-									Point2D segmentRight = new Point2D(xFromNextIndex, t.previousPoints[s+1]);
-									Point2D segmentRightV = new Point2D(0, t.points[s+1]-t.previousPoints[s+1]);
+									segmentLeft = new Point2D(xFromIndex, t.previousPoints[s]);
+									segmentLeftV = new Point2D(0, t.points[s]-t.previousPoints[s]);
+									segmentRight = new Point2D(xFromNextIndex, t.previousPoints[s+1]);
+									segmentRightV = new Point2D(0, t.points[s+1]-t.previousPoints[s+1]);
 									
 									float intersect[] = findCollision(rightPoint, d.v, segmentLeft, segmentLeftV, segmentRight, segmentRightV);
 									if(intersect != null)
@@ -264,6 +267,9 @@ public class PhysicsController extends Thread
 							d.removeFromPhysicsEngine=false;
 							collidables.remove(i);
 						}
+
+						d.x += d.v.x;
+						d.y += d.v.y;
 					}
 				}
 			}

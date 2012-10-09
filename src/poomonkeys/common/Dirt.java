@@ -27,33 +27,16 @@ public class Dirt extends Drawable
 
 	public void intersectTerrain(Terrain t, float[] intersect)
 	{
-		// this.x = x;
-		// this.y = y;
-
 		this.removeFromGLEngine = true;
 		this.removeFromPhysicsEngine = true;
 
-		int index = Math.round(intersect[0] / t.segmentWidth);
-
+		int index = (int)(intersect[0] / t.segmentWidth);
 		index = Math.max(0, index);
-		index = Math.min(t.points.length - 1, index);
-		//addDirt(t, index);
-		if(index == max_index)
-		{
-			addDirt(t, index - 1);
-			return;
-		}
-		if(index == min_index)
-		{
-			addDirt(t, index + 1);
-			return;
-		}
-		//t.offsets[index] += this.volume;
-		//t.offsets[index] += this.volume / (t.DIRT_VISCOSITY);
-		//this.volume -= this.volume / (t.DIRT_VISCOSITY);
+		index = Math.min(t.points.length - 2, index);
 		
-		float leftHeight = t.points[index - 1];
+		float leftHeight = t.points[index];
 		float rightHeight = t.points[index + 1];
+		
 		if(rightHeight < leftHeight)
 		{
 			addDirt(t, index + 1);
@@ -61,13 +44,55 @@ public class Dirt extends Drawable
 		}
 		if(leftHeight <= rightHeight)
 		{
-			addDirt(t, index - 1);
+			addDirt(t, index);
 			return;
 		}
+	}
+	
+	public void addDirt(Terrain t, int index)
+	{
+		while(this.volume > .001 && index > 0 && index <= t.NUM_POINTS-2)
+		{
+			float currentHeight = t.points[index] + t.offsets[index];
+			float leftHeight = t.points[index - 1] + t.offsets[index - 1];
+			float rightHeight = t.points[index + 1] + t.offsets[index + 1];
 
+			float rDiff = currentHeight - rightHeight;
+			float lDiff = currentHeight - leftHeight;
+			
+			if (rDiff >= lDiff)// && (leftHeight >= rightHeight || firstTime == false))
+			{
+				float segmentLength = (float) Math.sqrt(Math.pow((index + 1) * t.segmentWidth - index * t.segmentWidth, 2)
+						+ Math.pow(rightHeight - currentHeight, 2));
+				float slopeFactor = Math.min(.5f, (currentHeight - rightHeight) / segmentLength);
+				t.offsets[index] += (this.volume - (this.volume) * slopeFactor) / t.DIRT_VISCOSITY;
+				this.volume -= (this.volume - (this.volume) * slopeFactor) / t.DIRT_VISCOSITY;
+				index++;
+			}
+			else if (lDiff >= rDiff)// && (rightHeight >= leftHeight || firstTime == false))
+			{
+				float segmentLength = (float) Math.sqrt(Math.pow((index - 1) * t.segmentWidth - index * t.segmentWidth, 2)
+						+ Math.pow(leftHeight - currentHeight, 2));
+				float slopeFactor = Math.min(.5f, (currentHeight - leftHeight) / segmentLength);
+				t.offsets[index] += (this.volume - (this.volume) * slopeFactor) / t.DIRT_VISCOSITY;
+				this.volume -= (this.volume - (this.volume) * slopeFactor) / t.DIRT_VISCOSITY;
+				index--;
+			}
+			else if (currentHeight <= leftHeight && currentHeight <= rightHeight)
+			{
+				// current point is lower than neighbors
+				t.offsets[index] += this.volume / 2;
+				this.volume -= this.volume / 2;
+			}
+		}
+		
+		t.offsets[index] += this.volume;
+		this.volume=0;
+		
+		return;
 	}
 
-	public void addDirt(Terrain t, int index)
+	/*public void addDirt(Terrain t, int index)
 	{
 		if (index < 1 || index > t.NUM_POINTS - 2)
 		{
@@ -123,12 +148,12 @@ public class Dirt extends Drawable
 		///System.out.println(firstTime);
 		//System.out.println("x " + x / t.segmentWidth);
 		//System.out.println(index);
-	}
+	}*/
 	
-	//public void underTerrain()
-	//{
-	//	super.underTerrain();
-	//	this.removeFromGLEngine = true;
-	//	this.removeFromPhysicsEngine = true;
-	//}
+	public void underTerrain()
+	{
+		super.underTerrain();
+		this.removeFromGLEngine = true;
+		this.removeFromPhysicsEngine = true;
+	}
 }
