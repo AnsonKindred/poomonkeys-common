@@ -152,21 +152,15 @@ public class PhysicsController extends Thread
 							
 							if(leftIntersected || rightIntersected)
 							{
-							
-								//if(leftIntersected)
-								//{
-									int iFromPreviousLeftX = (int) ((d.x - d.width/2 - d.v.x)/t.segmentWidth);
-									int left_min_index = iFromPreviousLeftX;
-									int left_max_index = iFromLeftX;
-									Point2D leftPoint = new Point2D(d.x-d.v.x-d.width/2, d.y-d.v.y-d.height/2);
-								//}
-								//else //if(rightIntersected)
-								//{
-									int iFromPreviousRightX = (int) ((d.x + d.width/2 - d.v.x)/t.segmentWidth);
-									int right_min_index = iFromPreviousRightX;
-									int right_max_index = iFromRightX;
-									Point2D rightPoint = new Point2D(d.x-d.v.x+d.width/2, d.y-d.v.y-d.height/2);
-								//}
+								int iFromPreviousLeftX = (int) ((d.x - d.width/2 - d.v.x)/t.segmentWidth);
+								int left_min_index = iFromPreviousLeftX;
+								int left_max_index = iFromLeftX;
+								Point2D leftPoint = new Point2D(d.x-d.v.x-d.width/2, d.y-d.v.y-d.height/2);
+									
+								int iFromPreviousRightX = (int) ((d.x + d.width/2 - d.v.x)/t.segmentWidth);
+								int right_min_index = iFromPreviousRightX;
+								int right_max_index = iFromRightX;
+								Point2D rightPoint = new Point2D(d.x-d.v.x+d.width/2, d.y-d.v.y-d.height/2);
 								
 								if(left_min_index > left_max_index)
 								{
@@ -181,7 +175,7 @@ public class PhysicsController extends Thread
 									right_max_index = temp;
 								}
 								
-								for(int s = 0; s <= t.NUM_POINTS-2; s++)
+								for(int s = left_min_index; s <= left_max_index; s++)
 								{
 									float xFromIndex = s*t.segmentWidth;
 									float xFromNextIndex = (s+1)*t.segmentWidth;
@@ -191,57 +185,38 @@ public class PhysicsController extends Thread
 									Point2D segmentRight = new Point2D(xFromNextIndex, t.previousPoints[s+1]);
 									Point2D segmentRightV = new Point2D(0, t.points[s+1]-t.previousPoints[s+1]);
 									
-									Point2D intersectLeft = lineIntersect(leftPoint, d.v, segmentLeft, segmentLeftV, segmentRight, segmentRightV);
-									Point2D intersectRight = lineIntersect(rightPoint, d.v, segmentLeft, segmentLeftV, segmentRight, segmentRightV);
-									if(intersectLeft != null)
+									Point2D intersect = lineIntersect(leftPoint, d.v, segmentLeft, segmentLeftV, segmentRight, segmentRightV);
+									if(intersect != null)
 									{
-										d.intersectTerrain(t, intersectLeft.x, intersectLeft.y);
+										d.intersectTerrain(t, intersect.x, intersect.y);
 										break;
 									}
-									else if(intersectRight != null)
+								}
+								
+								for(int s = right_min_index; s <= right_max_index; s++)
+								{
+									float xFromIndex = s*t.segmentWidth;
+									float xFromNextIndex = (s+1)*t.segmentWidth;
+									
+									Point2D segmentLeft = new Point2D(xFromIndex, t.previousPoints[s]);
+									Point2D segmentLeftV = new Point2D(0, t.points[s]-t.previousPoints[s]);
+									Point2D segmentRight = new Point2D(xFromNextIndex, t.previousPoints[s+1]);
+									Point2D segmentRightV = new Point2D(0, t.points[s+1]-t.previousPoints[s+1]);
+									
+									Point2D intersect = lineIntersect(rightPoint, d.v, segmentLeft, segmentLeftV, segmentRight, segmentRightV);
+									if(intersect != null)
 									{
-										d.intersectTerrain(t, intersectRight.x, intersectRight.y);
+										d.intersectTerrain(t, intersect.x, intersect.y);
 										break;
 									}
 								}
 	
+
+								// Somehow a collision got missed, just remove the point
 								if(!d.removeFromPhysicsEngine)
 								{
-									if(leftIntersected)
-									{
-										for(int s = left_min_index; s <= left_max_index; s++)
-										{
-											float xFromIndex = s*t.segmentWidth;
-											float xFromNextIndex = (s+1)*t.segmentWidth;
-											System.out.println("(" + xFromIndex + ", " + t.previousPoints[s] + ")-(" + xFromNextIndex + ", " + t.previousPoints[s+1]+")");
-											System.out.println("<0, " + (t.points[s] - t.previousPoints[s]) + ">-<0, " + (t.points[s+1] - t.previousPoints[s+1])+">");
-											Point2D segmentLeft = new Point2D(xFromIndex, t.previousPoints[s]);
-											Point2D segmentLeftV = new Point2D(0, t.points[s]-t.previousPoints[s]);
-											Point2D segmentRight = new Point2D(xFromNextIndex, t.previousPoints[s+1]);
-											Point2D segmentRightV = new Point2D(0, t.points[s+1]-t.previousPoints[s+1]);
-											Point2D intersectLeft = lineIntersect(leftPoint, d.v, segmentLeft, segmentLeftV, segmentRight, segmentRightV);
-										}
-										System.out.println((d.x-d.width/2-d.v.x) + ", " + (d.y-d.height/2-d.v.y) + ", " + d.v.x + ", " + d.v.y);
-									}
-									if(rightIntersected)
-									{
-										for(int s = right_min_index; s <= right_max_index; s++)
-										{
-											float xFromIndex = s*t.segmentWidth;
-											float xFromNextIndex = (s+1)*t.segmentWidth;
-											System.out.println("(" + xFromIndex + ", " + t.previousPoints[s] + ")-(" + xFromNextIndex + ", " + t.previousPoints[s+1]+")");
-											System.out.println("<0, " + (t.points[s] - t.previousPoints[s]) + ">-<0, " + (t.points[s+1] - t.previousPoints[s+1])+">");
-											Point2D segmentLeft = new Point2D(xFromIndex, t.previousPoints[s]);
-											Point2D segmentLeftV = new Point2D(0, t.points[s]-t.previousPoints[s]);
-											Point2D segmentRight = new Point2D(xFromNextIndex, t.previousPoints[s+1]);
-											Point2D segmentRightV = new Point2D(0, t.points[s+1]-t.previousPoints[s+1]);
-											Point2D intersectRight = lineIntersect(rightPoint, d.v, segmentLeft, segmentLeftV, segmentRight, segmentRightV);
-										}
-										System.out.println((d.x+d.width/2-d.v.x) + ", " + (d.y-d.height/2-d.v.y) + ", " + d.v.x + ", " + d.v.y);
-									}
-									
-									System.exit(0);
-									//d.intersectTerrain(t, d.x-d.v.x, d.y-d.v.y);
+									d.removeFromGLEngine=true;
+									d.removeFromPhysicsEngine=true;
 								}
 							}
 						}
@@ -264,161 +239,132 @@ public class PhysicsController extends Thread
 	
 	public Point2D lineIntersect(Point2D p1, Point2D v1, Point2D p2, Point2D v2, Point2D p3, Point2D v3)
 	{
-		float EPSILON = .0001f;
-		
+		float EPSILON_A = .002f;
+		float EPSILON_B = .00001f;
+		double t[] = {-1f, -1f};
 
 		// Line segment points haven't moved, perform standard point / line segment intersection
-		if(v2.x > -EPSILON && v2.x < EPSILON && 
-			v2.y > -EPSILON && v2.y < EPSILON && 
-			v3.x > -EPSILON && v3.x < EPSILON && 
-			v3.y > -EPSILON && v3.y < EPSILON)
+		if(v2.x > -EPSILON_B && v2.x < EPSILON_B && 
+			v2.y > -EPSILON_B && v2.y < EPSILON_B && 
+			v3.x > -EPSILON_B && v3.x < EPSILON_B && 
+			v3.y > -EPSILON_B && v3.y < EPSILON_B)
 		{
-			float denom = -p2.x + p3.x;
-			float dif = -p2.y + p3.y;
-			float t = (-p1.y + p2.y + p1.x*dif/denom - p2.x*dif/denom) / (-v1.x*dif/denom + v1.y);
-			
-			if(t >= -EPSILON && t <= 1+EPSILON)
-			{
-				Point2D intersect = new Point2D(p1.x+v1.x*t, p1.y+v1.y*t);
-				return intersect;
-			}
-			
-			//System.out.println("Z " + t);
-			
-			return null;
-			
-			/*float denom = (p3.y - p2.y) * v1.x - (p3.x-p2.x)*v1.y;
-			if(denom == 0)
-			{
-				return null;
-			}
-			
-			float ua = ((p3.x-p2.x)*(p1.y - p2.y) - (p3.y - p2.y)*(p1.x - p2.x)) / denom;
-			float ub = (v1.x*(p1.y - p2.y) - v1.y*(p1.x - p2.x)) / denom;
-			if (ua >= -EPSILON && ua <= 1.0f+EPSILON && ub >= -EPSILON && ub <= 1.0f+EPSILON)
-			{
-				return new Point2D(p1.x + ua*v1.x, p1.y + ua*v1.y);
-			}
-
-			System.out.println("ua" + ua);
-			System.out.println("ub" + ub);
-			return null;*/
+			t[0] = pointLineIntersect(p1, v1, p2, p3);
 		}
-
 		// Line segment and point both moving vertically
-		if(v1.x > -EPSILON && v1.x < EPSILON && v2.x > -EPSILON && v2.x < EPSILON && v3.x > -EPSILON && v3.x < EPSILON)
+		else if(v1.x > -EPSILON_B && v1.x < EPSILON_B && v2.x > -EPSILON_B && v2.x < EPSILON_B && v3.x > -EPSILON_B && v3.x < EPSILON_B)
 		{
-			float denom = -p2.x+p3.x; 
-			float dif = p1.x - p2.x;
-			float t = (-p1.y + p2.y - (dif*p2.y)/denom + (dif*p3.y)/denom)/(v1.y - v2.y + (dif*v2.y)/denom - (dif*v3.y)/denom);
-			if(t >= -EPSILON && t <= 1+EPSILON)
-			{
-				Point2D intersect = new Point2D(p1.x+v1.x*t, p1.y+v1.y*t);
-				return intersect;
-			}
-			return null;
+			double denom = -p2.x+p3.x; 
+			double dif = p1.x - p2.x;
+			t[0] = (-p1.y + p2.y - (dif*p2.y)/denom + (dif*p3.y)/denom)/(v1.y - v2.y + (dif*v2.y)/denom - (dif*v3.y)/denom);
 		}
-		
-		// Line segment end points moving vertically
-		if(v2.x > -EPSILON && v2.x < EPSILON && v3.x > -EPSILON && v3.x < EPSILON)
+		// Line segment only moving vertically
+		else if(v2.x > -EPSILON_B && v2.x < EPSILON_B && v3.x > -EPSILON_B && v3.x < EPSILON_B)
 		{
 			// Both end points moving vertically at the same velocity (I can't believe I need special code for this...)
-			if(Math.abs(v2.y - v3.y) < EPSILON)
+			if(Math.abs(v2.y - v3.y) < EPSILON_B)
 			{
-				float denom = -p2.x+p3.x; 
-				float dif = -p2.y + p3.y;
+				double denom = -p2.x+p3.x; 
+				double dif = -p2.y + p3.y;
 				
-				float t = (-p1.y + p2.y + p1.x*dif/denom - p2.x*dif/denom)/(-v1.x*dif/denom + v1.y - v2.y);
-				if(t >= 0-EPSILON && t <= 1+EPSILON)
-				{
-					Point2D intersect = new Point2D(p1.x+v1.x*t, p1.y+v1.y*t);
-					return intersect;
-				}
-
-				System.out.println("A" + t);
-				return null;
+				t[0] = (-p1.y + p2.y + p1.x*dif/denom - p2.x*dif/denom)/(-v1.x*dif/denom + v1.y - v2.y);
 			}
-			
+			// One of the end points is not moving, the other is moving vertically
+			else if(v3.y > -EPSILON_B && v3.y < EPSILON_B)
+			{
+				double B = -p2.y*v1.x + p3.y*v1.x + p2.x*v1.y - p3.x*v1.y - p1.x*v2.y + p3.x*v2.y;
+				double A = v1.x*v2.y;
+				double sqrt = Math.sqrt(4*(p1.y*p2.x - p1.x*p2.y - p1.y*p3.x + p2.y*p3.x + 
+				        p1.x*p3.y - p2.x*p3.y)*A + Math.pow(B, 2));
+				double frac = -1/(2*A);
+				
+				t[0] = frac*(-B - sqrt);
+				t[1] = frac*(-B + sqrt);
+			}
+			// One of the end points is not moving, the other is moving vertically
+			else if(v2.y > -EPSILON_B && v2.y < EPSILON_B)
+			{
+				double B = -p2.y*v1.x + p3.y*v1.x + p2.x*v1.y - p3.x*v1.y + p1.x*v3.y - p2.x*v3.y;
+				double A = v1.x*v3.y;
+				double sqrt = Math.sqrt(-4*(p1.y*p2.x - p1.x*p2.y - p1.y*p3.x + p2.y*p3.x + 
+				        p1.x*p3.y - p2.x*p3.y)*A + Math.pow(B, 2));
+				double frac = 1/(2*A);
+				
+				t[0] = frac*(-B - sqrt);
+				t[1] = frac*(-B + sqrt);
+			}
 			// End points moving vertically at different velocities
-			double A = -v1.x*v2.y + v1.x*v3.y;
-			double B = -p2.y*v1.x + p3.y*v1.x + p2.x*v1.y - p3.x*v1.y - p1.x*v2.y + p3.x*v2.y + p1.x*v3.y - p2.x*v3.y;
-			double C = p1.y*p2.x - p1.x*p2.y - p1.y*p3.x + p2.y*p3.x + p1.x*p3.y - p2.x*p3.y;
-			double sqrt = Math.sqrt(B*B - 4*A*C);
-			double t = (-B + sqrt) / (2*A);
-
-			System.out.println("B" + t);			
-			System.out.println("a" + A);
-			System.out.println("b" + B);
-			System.out.println("c" + C);
-			if(t < -EPSILON || t > 1+EPSILON || Double.isNaN(t)) 
+			else
 			{
-				t = (-B - sqrt) / (2*A);
-				if(t < -EPSILON || t > 1+EPSILON || Double.isNaN(t))
-				{
-					System.out.println("C" + t);
-					return null;
-				}
-			}
-			
-			// make sure the intersection lies on the line segment
-			Point2D intersect = new Point2D((float)(p1.x+v1.x*t), (float)(p1.y+v1.y*t));
-			Point2D one = new Point2D((float)(p2.x+v2.x*t), (float)(p2.y+v2.y*t));
-			Point2D two = new Point2D((float)(p3.x+v3.x*t), (float)(p3.y+v3.y*t));
-			System.out.println(intersect.x + ", " + intersect.y);
-			System.out.println(one.x + ", " + one.y);
-			System.out.println(two.x + ", " + two.y);
-			if(!isBetween(intersect.x, one.x, two.x, EPSILON))
-			{
-				return null;
-			}
-			if(!isBetween(intersect.y, one.y, two.y, EPSILON))
-			{
-				return null;
-			}
-			
-			return intersect;
-		}
-		
-		// End points of line segment moving in x and y, point also moving
-		float A = v1.y*v2.x - v1.x*v2.y - v1.y*v3.x + v2.y*v3.x + v1.x*v3.y - v2.x*v3.y;
-		
-		if(A == 0)
-		{
-			return null;
-		}
-		
-		float B = -p2.y*v1.x + p3.y*v1.x + p2.x*v1.y - p3.x*v1.y + p1.y*v2.x - p3.y*v2.x - p1.x*v2.y + p3.x*v2.y - p1.y*v3.x + p2.y*v3.x + p1.x*v3.y - p2.x*v3.y;
-		float C = p1.y*p2.x - p1.x*p2.y - p1.y*p3.x + p2.y*p3.x + p1.x*p3.y - p2.x*p3.y;
-		float sqrt = (float) Math.sqrt(B*B - 4*A*C);
+				double A = -v1.x*v2.y + v1.x*v3.y;
+				double B = -p2.y*v1.x + p3.y*v1.x + p2.x*v1.y - p3.x*v1.y - p1.x*v2.y + p3.x*v2.y + p1.x*v3.y - p2.x*v3.y;
+				double C = p1.y*p2.x - p1.x*p2.y - p1.y*p3.x + p2.y*p3.x + p1.x*p3.y - p2.x*p3.y;
+				double sqrt = Math.sqrt(B*B - 4*A*C);
 				
-		float t = (-B + sqrt) / (2*A);
-		
-		// make sure the intersection happens within one time step
-		if(t < -EPSILON || t > 1+EPSILON || Float.isNaN(t)) 
+				t[0] = (-B + sqrt) / (2*A);
+				t[1] = (-B - sqrt) / (2*A);
+			}
+		}
+		// End points of line segment moving in x and y, point also moving
+		else
 		{
-			t = (-B - sqrt) / (2*A);
-			
-			if(t < -EPSILON || t > 1+EPSILON || Float.isNaN(t))
+			pointMovingLineIntersect(p1, v1, p2, v2, p3, v3, t);
+		}
+		
+
+		// make sure the intersection happens within one time step
+		float final_t = (float) t[0];
+		if(t[0] < -EPSILON_A || t[0] > 1+EPSILON_A || Double.isNaN(t[0])) 
+		{
+			final_t = (float) t[1];
+			if(t[1] < -EPSILON_A || t[1] > 1+EPSILON_A || Double.isNaN(t[1]))
 			{
 				return null;
 			}
 		}
 		
 		// make sure the intersection lies on the line segment
-		Point2D intersect = new Point2D(p1.x+v1.x*t, p1.y+v1.y*t);
-		Point2D one = new Point2D(p2.x+v2.x*t, p2.y+v2.y*t);
-		Point2D two = new Point2D(p3.x+v3.x*t, p3.y+v3.y*t);
-		
-		if(!isBetween(intersect.x, one.x, two.x, EPSILON))
+		Point2D intersect = new Point2D(p1.x+v1.x*final_t, p1.y+v1.y*final_t);
+		float p1x = p2.x+v2.x*final_t;
+		float p1y = p2.y+v2.y*final_t;
+		float p2x = p3.x+v3.x*final_t;
+		float p2y = p3.y+v3.y*final_t;
+		if(!isBetween(intersect.x, p1x, p2x, EPSILON_A))
 		{
 			return null;
 		}
-		if(!isBetween(intersect.y, one.y, two.y, EPSILON))
+		if(!isBetween(intersect.y, p1y, p2y, EPSILON_A))
 		{
 			return null;
 		}
 		
 		return intersect;
+	}
+	
+	public float pointLineIntersect(Point2D p1, Point2D v1, Point2D p2, Point2D p3)
+	{
+		float denom = -p2.x + p3.x;
+		float dif = -p2.y + p3.y;
+		float t = (-p1.y + p2.y + p1.x*dif/denom - p2.x*dif/denom) / (-v1.x*dif/denom + v1.y);
+		
+		return t;
+	}
+	
+	public void pointMovingLineIntersect(Point2D p1, Point2D v1, Point2D p2, Point2D v2, Point2D p3, Point2D v3, double[] t)
+	{
+		double A = v1.y*v2.x - v1.x*v2.y - v1.y*v3.x + v2.y*v3.x + v1.x*v3.y - v2.x*v3.y;
+		
+		if(A == 0)
+		{
+			return;
+		}
+		
+		double B = -p2.y*v1.x + p3.y*v1.x + p2.x*v1.y - p3.x*v1.y + p1.y*v2.x - p3.y*v2.x - p1.x*v2.y + p3.x*v2.y - p1.y*v3.x + p2.y*v3.x + p1.x*v3.y - p2.x*v3.y;
+		double C = p1.y*p2.x - p1.x*p2.y - p1.y*p3.x + p2.y*p3.x + p1.x*p3.y - p2.x*p3.y;
+		double sqrt = Math.sqrt(B*B - 4*A*C);
+				
+		t[0] = (-B + sqrt) / (2*A);
+		t[1] = (-B - sqrt) / (2*A);
 	}
 	
 	public void addCollidable(Drawable c)
