@@ -5,6 +5,7 @@ import java.util.ArrayList;
 public class PhysicsController extends Thread
 {
 	public static final float GRAVITY = -.01f;
+	float EPSILON = .00001f;
 	
 	private ArrayList<Drawable> collidables = new ArrayList<Drawable>();
 	private Terrain t;
@@ -78,6 +79,7 @@ public class PhysicsController extends Thread
 				e.printStackTrace();
 			}
 			
+			
 			synchronized (collidables) 
 			{ 
 				synchronized(t)
@@ -85,7 +87,6 @@ public class PhysicsController extends Thread
 					for (int i = collidables.size()-1; i >= 0; i--)
 					{
 						Drawable d = collidables.get(i);
-						
 						Point2D totalForce = new Point2D(0, 0);
 						for(int f = 0; f < permanentGlobalForces.size(); f++)
 						{
@@ -150,31 +151,34 @@ public class PhysicsController extends Thread
 							boolean leftIntersected = (d.y-d.height/2) <= landYatLeftX;
 							boolean rightIntersected = (d.y-d.height/2) <= landYatRightX;
 							
+							int iFromPreviousLeftX = (int) ((d.x - d.width/2 - d.v.x)/t.segmentWidth);
+							int left_min_index = iFromPreviousLeftX;
+							int left_max_index = iFromLeftX;
+							Point2D leftPoint = new Point2D(d.x-d.v.x-d.width/2, d.y-d.v.y-d.height/2);
+								
+							int iFromPreviousRightX = (int) ((d.x + d.width/2 - d.v.x)/t.segmentWidth);
+							int right_min_index = iFromPreviousRightX;
+							int right_max_index = iFromRightX;
+							Point2D rightPoint = new Point2D(d.x-d.v.x+d.width/2, d.y-d.v.y-d.height/2);
+							
+							if(left_min_index > left_max_index)
+							{
+								int temp = left_min_index;
+								left_min_index = left_max_index;
+								left_max_index = temp;
+							}
+							if(right_min_index > right_max_index)
+							{
+								int temp = right_min_index;
+								right_min_index = right_max_index;
+								right_max_index = temp;
+							}
+
+							float lowestT = Float.MAX_VALUE;
+							float firstIntersection[] = null;
+
 							if(leftIntersected || rightIntersected)
 							{
-								int iFromPreviousLeftX = (int) ((d.x - d.width/2 - d.v.x)/t.segmentWidth);
-								int left_min_index = iFromPreviousLeftX;
-								int left_max_index = iFromLeftX;
-								Point2D leftPoint = new Point2D(d.x-d.v.x-d.width/2, d.y-d.v.y-d.height/2);
-									
-								int iFromPreviousRightX = (int) ((d.x + d.width/2 - d.v.x)/t.segmentWidth);
-								int right_min_index = iFromPreviousRightX;
-								int right_max_index = iFromRightX;
-								Point2D rightPoint = new Point2D(d.x-d.v.x+d.width/2, d.y-d.v.y-d.height/2);
-								
-								if(left_min_index > left_max_index)
-								{
-									int temp = left_min_index;
-									left_min_index = left_max_index;
-									left_max_index = temp;
-								}
-								if(right_min_index > right_max_index)
-								{
-									int temp = right_min_index;
-									right_min_index = right_max_index;
-									right_max_index = temp;
-								}
-								
 								for(int s = left_min_index; s <= left_max_index; s++)
 								{
 									float xFromIndex = s*t.segmentWidth;
@@ -185,11 +189,14 @@ public class PhysicsController extends Thread
 									Point2D segmentRight = new Point2D(xFromNextIndex, t.previousPoints[s+1]);
 									Point2D segmentRightV = new Point2D(0, t.points[s+1]-t.previousPoints[s+1]);
 									
-									Point2D intersect = lineIntersect(leftPoint, d.v, segmentLeft, segmentLeftV, segmentRight, segmentRightV);
+									float intersect[] = findCollision(leftPoint, d.v, segmentLeft, segmentLeftV, segmentRight, segmentRightV);
 									if(intersect != null)
 									{
-										d.intersectTerrain(t, intersect.x, intersect.y);
-										break;
+										if(intersect[2] < lowestT)
+										{
+											lowestT = intersect[2];
+											firstIntersection = intersect;
+										}
 									}
 								}
 								
@@ -203,21 +210,52 @@ public class PhysicsController extends Thread
 									Point2D segmentRight = new Point2D(xFromNextIndex, t.previousPoints[s+1]);
 									Point2D segmentRightV = new Point2D(0, t.points[s+1]-t.previousPoints[s+1]);
 									
-									Point2D intersect = lineIntersect(rightPoint, d.v, segmentLeft, segmentLeftV, segmentRight, segmentRightV);
+									float intersect[] = findCollision(rightPoint, d.v, segmentLeft, segmentLeftV, segmentRight, segmentRightV);
 									if(intersect != null)
 									{
-										d.intersectTerrain(t, intersect.x, intersect.y);
-										break;
+										if(intersect[2] < lowestT)
+										{
+											lowestT = intersect[2];
+											firstIntersection = intersect;
+										}
 									}
 								}
-	
 
-								// Somehow a collision got missed, just remove the point
-								if(!d.removeFromPhysicsEngine)
+								// Somehow a collision got missed, at least let the drawable know that it is beneath the terrain
+								if(firstIntersection == null)
 								{
-									d.removeFromGLEngine=true;
-									d.removeFromPhysicsEngine=true;
+									d.underTerrain();
 								}
+							}
+							else
+							{
+								d.aboveTerrain();
+							}
+							
+							if(d.width > 2)
+							{
+								for(int s = left_min_index; s <= right_max_index; s++)
+								{
+									float xFromIndex = s*t.segmentWidth;
+									
+									Point2D segmentPoint = new Point2D(xFromIndex, t.previousPoints[s]);
+									Point2D segmentV = new Point2D(0, t.points[s]-t.previousPoints[s]);
+									
+									float intersect[] = findCollision(segmentPoint, segmentV, leftPoint, d.v, rightPoint, d.v);
+									if(intersect != null)
+									{
+										if(intersect[2] < lowestT)
+										{
+											lowestT = intersect[2];
+											firstIntersection = intersect;
+										}
+									}
+								}
+							}
+							
+							if(firstIntersection != null)
+							{
+								d.intersectTerrain(t, firstIntersection);
 							}
 						}
 						
@@ -229,7 +267,7 @@ public class PhysicsController extends Thread
 					}
 				}
 			}
-			
+
 			t.update();
 			
 			globalForces.clear();
@@ -237,32 +275,45 @@ public class PhysicsController extends Thread
 		}
 	}
 	
-	public Point2D lineIntersect(Point2D p1, Point2D v1, Point2D p2, Point2D v2, Point2D p3, Point2D v3)
+	
+	/**
+	 * Finds the time at which a point with a fixed velocity will intersect 
+	 * a line segment whose end points are also moving at fixed (but independent)
+	 * velocities.
+	 * 
+	 * If the end points of the line segment are both moving at the same 
+	 * velocity, consider using the slightly faster findCollision_pointAndMovingLinesegment
+	 * 
+	 * If the line segment isn't moving at all consider using findCollision_pointAndLinesegment
+	 *  
+	 * @param p1	point starting location
+	 * @param v1	point velocity
+	 * @param p2	first line segment end point starting location
+	 * @param v2	first line segment end point velocity
+	 * @param p3	second line segment end point starting location
+	 * @param v3	second line segment end point velocity
+	 * 
+	 * @return an array of length 3 containing the x, y intersect point and time of intersection (in that order)
+	 */
+	public float[] findCollision(Point2D p1, Point2D v1, Point2D p2, Point2D v2, Point2D p3, Point2D v3)
 	{
 		float EPSILON_A = .002f;
-		float EPSILON_B = .00001f;
 		double t[] = {-1f, -1f};
+		float result[] = new float[3];
 
 		// Line segment points haven't moved, perform standard point / line segment intersection
-		if(v2.x > -EPSILON_B && v2.x < EPSILON_B && 
-			v2.y > -EPSILON_B && v2.y < EPSILON_B && 
-			v3.x > -EPSILON_B && v3.x < EPSILON_B && 
-			v3.y > -EPSILON_B && v3.y < EPSILON_B)
+		if(v2.x > -EPSILON && v2.x < EPSILON && 
+			v2.y > -EPSILON && v2.y < EPSILON && 
+			v3.x > -EPSILON && v3.x < EPSILON && 
+			v3.y > -EPSILON && v3.y < EPSILON)
 		{
-			t[0] = pointLineIntersect(p1, v1, p2, p3);
-		}
-		// Line segment and point both moving vertically
-		else if(v1.x > -EPSILON_B && v1.x < EPSILON_B && v2.x > -EPSILON_B && v2.x < EPSILON_B && v3.x > -EPSILON_B && v3.x < EPSILON_B)
-		{
-			double denom = -p2.x+p3.x; 
-			double dif = p1.x - p2.x;
-			t[0] = (-p1.y + p2.y - (dif*p2.y)/denom + (dif*p3.y)/denom)/(v1.y - v2.y + (dif*v2.y)/denom - (dif*v3.y)/denom);
+			t[0] = findCollision_pointAndLinesegment(p1, v1, p2, p3);
 		}
 		// Line segment only moving vertically
-		else if(v2.x > -EPSILON_B && v2.x < EPSILON_B && v3.x > -EPSILON_B && v3.x < EPSILON_B)
+		else if(v2.x > -EPSILON && v2.x < EPSILON && v3.x > -EPSILON && v3.x < EPSILON)
 		{
 			// Both end points moving vertically at the same velocity (I can't believe I need special code for this...)
-			if(Math.abs(v2.y - v3.y) < EPSILON_B)
+			if(Math.abs(v2.y - v3.y) < EPSILON)
 			{
 				double denom = -p2.x+p3.x; 
 				double dif = -p2.y + p3.y;
@@ -270,24 +321,24 @@ public class PhysicsController extends Thread
 				t[0] = (-p1.y + p2.y + p1.x*dif/denom - p2.x*dif/denom)/(-v1.x*dif/denom + v1.y - v2.y);
 			}
 			// One of the end points is not moving, the other is moving vertically
-			else if(v3.y > -EPSILON_B && v3.y < EPSILON_B)
+			else if(v3.y > -EPSILON && v3.y < EPSILON)
 			{
+				double C = p1.y*p2.x - p1.x*p2.y - p1.y*p3.x + p2.y*p3.x + p1.x*p3.y - p2.x*p3.y;
 				double B = -p2.y*v1.x + p3.y*v1.x + p2.x*v1.y - p3.x*v1.y - p1.x*v2.y + p3.x*v2.y;
 				double A = v1.x*v2.y;
-				double sqrt = Math.sqrt(4*(p1.y*p2.x - p1.x*p2.y - p1.y*p3.x + p2.y*p3.x + 
-				        p1.x*p3.y - p2.x*p3.y)*A + Math.pow(B, 2));
+				double sqrt = Math.sqrt(4*A*C + B*B);
 				double frac = -1/(2*A);
 				
 				t[0] = frac*(-B - sqrt);
 				t[1] = frac*(-B + sqrt);
 			}
 			// One of the end points is not moving, the other is moving vertically
-			else if(v2.y > -EPSILON_B && v2.y < EPSILON_B)
+			else if(v2.y > -EPSILON && v2.y < EPSILON)
 			{
+				double C = p1.y*p2.x - p1.x*p2.y - p1.y*p3.x + p2.y*p3.x + p1.x*p3.y - p2.x*p3.y;
 				double B = -p2.y*v1.x + p3.y*v1.x + p2.x*v1.y - p3.x*v1.y + p1.x*v3.y - p2.x*v3.y;
 				double A = v1.x*v3.y;
-				double sqrt = Math.sqrt(-4*(p1.y*p2.x - p1.x*p2.y - p1.y*p3.x + p2.y*p3.x + 
-				        p1.x*p3.y - p2.x*p3.y)*A + Math.pow(B, 2));
+				double sqrt = Math.sqrt(-4*A*C + B*B);
 				double frac = 1/(2*A);
 				
 				t[0] = frac*(-B - sqrt);
@@ -305,10 +356,22 @@ public class PhysicsController extends Thread
 				t[1] = (-B - sqrt) / (2*A);
 			}
 		}
-		// End points of line segment moving in x and y, point also moving
+		// Line segment endpoints both moving at the same velocity
+		else if(Math.abs(v2.x-v3.x) < EPSILON && Math.abs(v3.y-v2.y) < EPSILON)
+		{
+			t[0] = findCollision_pointAndMovingLinesegment(p1, v1, p2, p3, v2);
+		}
+		// Line segment and point both moving vertically
+		else if(v1.x > -EPSILON && v1.x < EPSILON && v2.x > -EPSILON && v2.x < EPSILON && v3.x > -EPSILON && v3.x < EPSILON)
+		{
+			double denom = -p2.x+p3.x; 
+			double dif = p1.x - p2.x;
+			t[0] = (-p1.y + p2.y - (dif*p2.y)/denom + (dif*p3.y)/denom)/(v1.y - v2.y + (dif*v2.y)/denom - (dif*v3.y)/denom);
+		}
+		// End points of line segment moving at different velocities, point also moving
 		else
 		{
-			pointMovingLineIntersect(p1, v1, p2, v2, p3, v3, t);
+			findCollision_pointAndLinesegmentWithIndependentlyMovingEndpoints(p1, v1, p2, v2, p3, v3, t);
 		}
 		
 
@@ -324,24 +387,26 @@ public class PhysicsController extends Thread
 		}
 		
 		// make sure the intersection lies on the line segment
-		Point2D intersect = new Point2D(p1.x+v1.x*final_t, p1.y+v1.y*final_t);
+		result[0] = p1.x+v1.x*final_t;
+		result[1] = p1.y+v1.y*final_t;
+		result[2] = final_t;
 		float p1x = p2.x+v2.x*final_t;
 		float p1y = p2.y+v2.y*final_t;
 		float p2x = p3.x+v3.x*final_t;
 		float p2y = p3.y+v3.y*final_t;
-		if(!isBetween(intersect.x, p1x, p2x, EPSILON_A))
+		if(!isBetween(result[0], p1x, p2x, EPSILON_A))
 		{
 			return null;
 		}
-		if(!isBetween(intersect.y, p1y, p2y, EPSILON_A))
+		if(!isBetween(result[1], p1y, p2y, EPSILON_A))
 		{
 			return null;
 		}
 		
-		return intersect;
+		return result;
 	}
 	
-	public float pointLineIntersect(Point2D p1, Point2D v1, Point2D p2, Point2D p3)
+	public float findCollision_pointAndLinesegment(Point2D p1, Point2D v1, Point2D p2, Point2D p3)
 	{
 		float denom = -p2.x + p3.x;
 		float dif = -p2.y + p3.y;
@@ -350,7 +415,24 @@ public class PhysicsController extends Thread
 		return t;
 	}
 	
-	public void pointMovingLineIntersect(Point2D p1, Point2D v1, Point2D p2, Point2D v2, Point2D p3, Point2D v3, double[] t)
+	public double findCollision_pointAndMovingLinesegment(Point2D p1, Point2D v1, Point2D p2, Point2D p3, Point2D lv)
+	{
+		float denom = -p2.x + p3.x;
+		float dif = -p2.y + p3.y;
+		
+		// point moving vertically
+		if(v1.x > -EPSILON && v1.x < EPSILON)
+		{
+			return (p1.y - p2.y - (p1.x*dif)/denom + (p2.x*dif)/denom)/(-v1.y - (dif*lv.x)/denom + lv.y);
+		}
+		// point moving non-vertically
+		else
+		{
+			return (p1.y - p2.y - (p1.x*dif)/denom + (p2.x*dif)/denom)/((dif*v1.x)/denom - v1.y - (dif*lv.x)/denom + lv.y);
+		}
+	}
+	
+	public void findCollision_pointAndLinesegmentWithIndependentlyMovingEndpoints(Point2D p1, Point2D v1, Point2D p2, Point2D v2, Point2D p3, Point2D v3, double[] t)
 	{
 		double A = v1.y*v2.x - v1.x*v2.y - v1.y*v3.x + v2.y*v3.x + v1.x*v3.y - v2.x*v3.y;
 		
@@ -390,6 +472,11 @@ public class PhysicsController extends Thread
 		{
 			return collidables.contains(d);
 		}
+	}
+	
+	public static boolean isBetween(float c, float a, float b) 
+	{
+	    return b > a ? c >= a && c <= b : c >= b && c <= a;
 	}
 	
 	// Return true if c is between a and b.

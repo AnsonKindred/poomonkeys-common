@@ -37,6 +37,7 @@ public class Drawable extends Point2D
 	public boolean didInit = false;
 	public boolean removeFromGLEngine = false;
 	public boolean removeFromPhysicsEngine = false;
+	public boolean isUnderTerrain;
 	
 	public void registerDrawable(Drawable d)
     {
@@ -177,8 +178,18 @@ public class Drawable extends Point2D
         }
     }
 
-	public void intersectTerrain(Terrain t, float x, float y)
+	public void intersectTerrain(Terrain t, float[] intersect)
 	{
 		
+	}
+
+	public void underTerrain() 
+	{
+		isUnderTerrain = true;
+	}
+
+	public void aboveTerrain() 
+	{
+		isUnderTerrain = false;
 	}
 }

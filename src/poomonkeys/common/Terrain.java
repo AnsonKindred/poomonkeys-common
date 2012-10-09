@@ -7,7 +7,8 @@ public class Terrain extends Drawable
 {
 
 	static final int NUM_POINTS = 256;
-	static final float DIRT_SIZE = .1f;
+	static final float DIRT_SIZE = .2f;
+	static final float DIRT_VISCOSITY = 50f;
 	float segmentWidth;
 	float points[] = new float[NUM_POINTS];
 	float previousPoints[] = new float[NUM_POINTS];
@@ -38,14 +39,6 @@ public class Terrain extends Drawable
 	// x and y are relative to the bottom left of the terrain
 	public void explodeCircle(float x, float y, float r)
 	{
-		// Helpful square at click point
-		/*Dirt test = new Dirt();
-		test.p.x = x;
-		test.p.y = y;
-		test.width = 1;
-		test.height = 1;
-		t.registerDrawable(test);*/
-		
 		// The min and max terrain index that lies within the explosion radius
 		int min_index = Math.max(0, (int) ((x - r) / segmentWidth) + 1);
 		int max_index = Math.min(NUM_POINTS - 1, (int) ((x + r) / segmentWidth));
@@ -161,6 +154,7 @@ public class Terrain extends Drawable
 				}
 
 				points[i] = bCircleY;
+				previousPoints[i] = bCircleY;
 			}
 		}
 		buildGeometry(width, height);
