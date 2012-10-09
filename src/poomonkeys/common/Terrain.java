@@ -51,8 +51,8 @@ public class Terrain extends Drawable
 		int max_index = Math.min(NUM_POINTS - 1, (int) ((x + r) / segmentWidth));
 
 		// The actual x value at the min and max indexes
-		float min_x = (min_index+1) * segmentWidth;
-		float max_x = (max_index-1) * segmentWidth;
+		float min_x = (min_index) * segmentWidth;
+		float max_x = (max_index) * segmentWidth;
 		
 		float totalDirtVolume = 0;
 		ArrayList<Dirt> dirt = null;
