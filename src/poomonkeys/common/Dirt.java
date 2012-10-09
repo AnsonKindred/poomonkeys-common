@@ -5,6 +5,7 @@ import javax.media.opengl.GL2;
 public class Dirt extends Drawable
 {
 	public float volume;
+	float min_index, max_index;
 
 	public void buildGeometry(float viewWidth, float viewHeight)
 	{
@@ -36,72 +37,98 @@ public class Dirt extends Drawable
 
 		index = Math.max(0, index);
 		index = Math.min(t.points.length - 1, index);
+		//addDirt(t, index);
+		if(index == max_index)
+		{
+			addDirt(t, index - 1);
+			return;
+		}
+		if(index == min_index)
+		{
+			addDirt(t, index + 1);
+			return;
+		}
+		//t.offsets[index] += this.volume;
+		//t.offsets[index] += this.volume / (t.DIRT_VISCOSITY);
+		//this.volume -= this.volume / (t.DIRT_VISCOSITY);
 		
-		addDirt(t, index, intersect[0], true);
+		float leftHeight = t.points[index - 1];
+		float rightHeight = t.points[index + 1];
+		if(rightHeight < leftHeight)
+		{
+			addDirt(t, index + 1);
+			return;
+		}
+		if(leftHeight <= rightHeight)
+		{
+			addDirt(t, index - 1);
+			return;
+		}
+
 	}
 
-	public void addDirt(Terrain t, int index, float x, boolean firstTime)
+	public void addDirt(Terrain t, int index)
 	{
 		if (index < 1 || index > t.NUM_POINTS - 2)
 		{
 			return;
 		}
 
-		if (this.volume < .00001)
+		if (this.volume < .001)
 		{
 			t.offsets[index] += this.volume;
-			this.volume = 0;
 			return;
-		}
-
+		}		
+		
 		float currentHeight = t.points[index] + t.offsets[index];
 		float leftHeight = t.points[index - 1] + t.offsets[index - 1];
 		float rightHeight = t.points[index + 1] + t.offsets[index + 1];
 
-		if (currentHeight > rightHeight && (leftHeight >= rightHeight || firstTime == false))
+		float rDiff = currentHeight - rightHeight;
+		float lDiff = currentHeight - leftHeight;
+		
+		if (rDiff >= lDiff)// && (leftHeight >= rightHeight || firstTime == false))
 		{
-			//System.out.println("C>R " + firstTime);
 			float segmentLength = (float) Math.sqrt(Math.pow((index + 1) * t.segmentWidth - index * t.segmentWidth, 2)
 					+ Math.pow(rightHeight - currentHeight, 2));
-			float slopeFactor = Math.min(.9f, (currentHeight - rightHeight) / segmentLength);
-			float someDirt = this.volume*t.DIRT_VISCOSITY;
-			t.offsets[index + 1] += (someDirt - someDirt * slopeFactor);
-			this.volume -=  (someDirt - someDirt*slopeFactor);
-			addDirt(t, index + 1, x, false);
+			float slopeFactor = Math.min(1f, (currentHeight - rightHeight) / segmentLength);
+			t.offsets[index] += (this.volume - (this.volume) * slopeFactor) / t.DIRT_VISCOSITY;
+			this.volume -= (this.volume - (this.volume) * slopeFactor) / t.DIRT_VISCOSITY;
+			addDirt(t, index + 1);
 			return;
-		} 
-		if (currentHeight > leftHeight && (rightHeight >= leftHeight || firstTime == false))
+		}
+		
+		if (lDiff >= rDiff)// && (rightHeight >= leftHeight || firstTime == false))
 		{
-			//System.out.println("C>L " + firstTime);
 			float segmentLength = (float) Math.sqrt(Math.pow((index - 1) * t.segmentWidth - index * t.segmentWidth, 2)
 					+ Math.pow(leftHeight - currentHeight, 2));
-			float slopeFactor = Math.min(.9f, (currentHeight - leftHeight) / segmentLength);
-			float someDirt = this.volume*t.DIRT_VISCOSITY;
-			t.offsets[index - 1] += (someDirt - someDirt*slopeFactor);
-			this.volume -=  (someDirt - someDirt*slopeFactor);
-			addDirt(t, index - 1, x, false);
+			float slopeFactor = Math.min(1f, (currentHeight - leftHeight) / segmentLength);
+			t.offsets[index] += (this.volume - (this.volume) * slopeFactor) / t.DIRT_VISCOSITY;
+			this.volume -= (this.volume - (this.volume) * slopeFactor) / t.DIRT_VISCOSITY;
+			addDirt(t, index - 1);
 			return;
-		} 
+		}
+
 		if (currentHeight <= leftHeight && currentHeight <= rightHeight)
 		// current point is lower than neighbors
 		{
-			t.offsets[index] += this.volume / (t.DIRT_VISCOSITY);
-			this.volume -= this.volume / (t.DIRT_VISCOSITY);
-			addDirt(t, index, x, false);
+			t.offsets[index] += this.volume / 2;
+			this.volume -= this.volume / 2;
+			addDirt(t, index);
 			return;
 		}
-		System.out.println("cHeight " + currentHeight);
-		System.out.println("rHeight " + rightHeight);
-		System.out.println("lHeight " + leftHeight);
-		System.out.println(firstTime);
-		System.out.println("x " + x/t.segmentWidth);
-		System.out.println(index);
+		//System.out.println("cHeight " + currentHeight);
+		//System.out.println("rHeight " + rightHeight);
+		///System.out.println("lHeight " + leftHeight);
+		///System.out.println(firstTime);
+		//System.out.println("x " + x / t.segmentWidth);
+		//System.out.println(index);
 	}
 	
-	public void underTerrain()
-	{
-		super.underTerrain();
-		this.removeFromGLEngine = true;
-		this.removeFromPhysicsEngine = true;
-	}
+	//public void underTerrain()
+	//{
+	//	super.underTerrain();
+	//	this.removeFromGLEngine = true;
+	//	this.removeFromPhysicsEngine = true;
+	//}
 }
