@@ -37,17 +37,17 @@ public class AimingHUD extends Drawable
 	
 	public void buildGeometry(float viewWidth, float viewHeight)
 	{	
-		anglePicker.circle.x = viewWidth/2-ANGLE_PICKER_LEFT_OFFSET;
-		anglePicker.line.x = viewWidth/2-ANGLE_PICKER_LEFT_OFFSET;
-		anglePicker.circle.y = viewHeight/2-ANGLE_PICKER_LEFT_OFFSET;
-		anglePicker.line.y = viewHeight/2-ANGLE_PICKER_LEFT_OFFSET;
+		anglePicker.circle.p[0] = viewWidth/2-ANGLE_PICKER_LEFT_OFFSET;
+		anglePicker.line.p[0] = viewWidth/2-ANGLE_PICKER_LEFT_OFFSET;
+		anglePicker.circle.p[1] = viewHeight/2-ANGLE_PICKER_LEFT_OFFSET;
+		anglePicker.line.p[1] = viewHeight/2-ANGLE_PICKER_LEFT_OFFSET;
 		
 		float[] line = {
 				0, 0, 0,
 				0, viewHeight, 0
 			};
-		divider.baseGeometry = line; 
-		divider.x = DIVIDER;
+		divider.vertices = line; 
+		divider.p[0] = DIVIDER;
 		divider.drawMode = GL2.GL_LINES;
 	}
 	
@@ -58,10 +58,10 @@ public class AimingHUD extends Drawable
 	
 	public void touch(float x, float y, float viewWidth, float viewHeight)
 	{
-		if(x < startButton.width && y < startButton.height) {
+		if(x < startButton.getWidth() && y < startButton.getHeight()) {
 			startButton.depress();
 		}
-		else if(x < divider.x) {
+		else if(x < divider.p[0]) {
 			anglePicker.touch(x, y);
 		}
 		else {

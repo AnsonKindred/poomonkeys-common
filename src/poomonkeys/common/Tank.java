@@ -4,9 +4,9 @@ import javax.media.opengl.GL2;
 
 public class Tank extends Drawable
 {
-	static final float TURRENT_LENGTH = 2f;
-	static final float WIDTH = 4f; 
-	static final float HEIGHT = 4f; 
+	static final float TURRENT_LENGTH = 1f;
+	static final float WIDTH = 2f; 
+	static final float HEIGHT = 2f; 
 
 	float baseGeometry[];
 	
@@ -31,7 +31,7 @@ public class Tank extends Drawable
 		        };
 
 		this.drawMode = GL2.GL_LINE_LOOP;
-		super.baseGeometry = baseGeometry;
+		super.vertices = baseGeometry;
 		
 		turretLength = TURRENT_LENGTH;
 		float turretGeometry[] = {
@@ -39,23 +39,23 @@ public class Tank extends Drawable
 				0, turretLength, 0
 			};
 		turret.drawMode = GL2.GL_LINES;
-		turret.baseGeometry = turretGeometry;
-		turret.x = 0;
-		turret.y = height/2;
+		turret.vertices = turretGeometry;
+		turret.p[0] = 0;
+		turret.p[1] = height/2;
 	}
 	
 	public void intersectTerrain(Terrain t, float[] intersect)
 	{
 		removeFromPhysicsEngine = true;
-		this.x += this.v.x*intersect[2];
-		this.y += this.v.y*intersect[2];
-		this.v.x = 0;
-		this.v.y = 0;
+		this.p[0] += this.v[0]*intersect[2];
+		this.p[1] += this.v[1]*intersect[2];
+		this.v[0] = 0;
+		this.v[1] = 0;
 	}
 	
 	public void underTerrain()
 	{
-		this.v.x = 0;
-		this.v.y = 0;
+		this.v[0] = 0;
+		this.v[1] = 0;
 	}
 }

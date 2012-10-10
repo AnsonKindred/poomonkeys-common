@@ -8,7 +8,7 @@ public class Terrain extends Drawable
 
 	static final int NUM_POINTS = 128;
 	static final float DIRT_SIZE = .1f;
-	static final float DIRT_VISCOSITY = 1.1f;
+	static final float DIRT_VISCOSITY = 1.5f;
 	float segmentWidth;
 	float points[] = new float[NUM_POINTS];
 	float previousPoints[] = new float[NUM_POINTS];
@@ -21,9 +21,9 @@ public class Terrain extends Drawable
 	
 	public void addTankRandom(Tank tank)
 	{
-		tank.x = (float) (Math.random()*width);
-		int min_index = Math.max(0, (int) ((tank.x - tank.width/2) / segmentWidth));
-		int max_index = Math.min(NUM_POINTS - 1, (int) ((tank.x + tank.width/2) / segmentWidth)+1);
+		tank.p[0] = (float) (Math.random()*width);
+		int min_index = Math.max(0, (int) ((tank.p[0] - tank.width/2) / segmentWidth));
+		int max_index = Math.min(NUM_POINTS - 1, (int) ((tank.p[0] + tank.width/2) / segmentWidth)+1);
 		float y1 = points[min_index];
 		float y2 = points[max_index];
 		
@@ -33,7 +33,7 @@ public class Terrain extends Drawable
 			points[i] = average;
 		}
 		update();
-		tank.y = average + tank.height/2;
+		tank.p[1] = average + tank.height/2;
 	}
 	
 	// x and y are relative to the bottom left of the terrain
@@ -63,7 +63,9 @@ public class Terrain extends Drawable
 		}
 		PhysicsController physicsController = PhysicsController.getInstance(this);
 		physicsController.addCollidables((ArrayList<? extends Drawable>)dirt);
-		physicsController.pointForces.add(new PointForce(x, y, 10));
+		float[] f = new float[3];
+		f[0] = x; f[1] = y; f[2] = 10;
+		physicsController.pointForces.add(f);
 	}
 
 	private ArrayList<Dirt> _generateDirtpoints(float min_x, float max_x, float x, float y, float r)
@@ -115,10 +117,10 @@ public class Terrain extends Drawable
 			while (tCircleY + d <= top)
 			{
 				Dirt dirtPoint = new Dirt();
-				dirtPoint.x = col_x;
-				dirtPoint.y = tCircleY + d;
-				dirtPoint.width = DIRT_SIZE * 2 + gap;
-				dirtPoint.height = DIRT_SIZE * 2 + gap;
+				dirtPoint.p[0] = col_x;
+				dirtPoint.p[1] = tCircleY + d;
+				dirtPoint.setWidth(DIRT_SIZE * 2 + gap);
+				dirtPoint.setHeight(DIRT_SIZE * 2 + gap);
 				dirt.add(dirtPoint);
 				registerDrawable(dirtPoint);
 				d += DIRT_SIZE * 2 + gap;
@@ -178,12 +180,12 @@ public class Terrain extends Drawable
 	
 	public void buildGeometry(float viewWidth, float viewHeight)
 	{
-		baseGeometry = new float[NUM_POINTS*3];
+		vertices = new float[NUM_POINTS*3];
 		for(int i = 0; i < NUM_POINTS; i++)
 		{
-			baseGeometry[i*3] = segmentWidth*i;;
-			baseGeometry[i*3+1] = points[i];
-			baseGeometry[i*3+2] = 0;
+			vertices[i*3] = segmentWidth*i;;
+			vertices[i*3+1] = points[i];
+			vertices[i*3+2] = 0;
 		}
 		drawMode = GL2.GL_LINE_STRIP;
 	}
@@ -192,9 +194,9 @@ public class Terrain extends Drawable
 	{
 		PhysicsController physicsController = PhysicsController.getInstance(this);
 		Dirt dirtPoint = new Dirt();
-		dirtPoint.x = x;
-		dirtPoint.y = y;
-		dirtPoint.v.y = -1;
+		dirtPoint.p[0] = x;
+		dirtPoint.p[1] = y;
+		dirtPoint.v[1] = -1;
 		dirtPoint.width = DIRT_SIZE;
 		dirtPoint.height = DIRT_SIZE;
 		dirtPoint.volume = 1;

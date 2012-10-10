@@ -6,32 +6,27 @@ import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.EventListener;
 import java.util.Iterator;
+import java.util.LinkedList;
 
-public class Drawable extends Point2D
+public class Drawable
 {
 	public ArrayList<Drawable> drawables = new ArrayList<Drawable>();
 	public ArrayList<EventListener> listenerList = new ArrayList<EventListener>();
 	
-	public Point2D v = new Point2D();
-	public Point2D a = new Point2D();
+	public float[] p = new float[2];
+	public float[] v = new float[2];
+	public float[] a = new float[2];
 	public float m = 1;
 	
 	public float rotation = 0;
+	public Point2D scale = new Point2D(1, 1);
 	public float slope    = 0;
-	public float width    = 0;
-	public float height   = 0;
+	protected float width = 0;
+	protected float height = 0;
 	
-	public FloatBuffer geometryBuffer = null;
-	public FloatBuffer textureBuffer  = null;
-	public FloatBuffer colorBuffer    = null;
-	
-	public float[] color = {.3f, .4f, .5f, 1};
-	
-	public float[] vertexColors = null;
-	public float[] textureCoords = null;
-	public float[] baseGeometry = null;
-	public int texture_id = 0;	
-	
+	public Geometry geometry = null;
+	public FloatBuffer vertexBuffer  = null;
+	public float[] vertices = null;
 	public int drawMode;
 	
 	public boolean didInit = false;
@@ -43,61 +38,6 @@ public class Drawable extends Point2D
     {
     	drawables.add(d);
     }
-	
-	public void buildGeometry(float viewWidth, float viewHeight)
-	{
-		
-	}
-	
-	public void finalizeGeometry()
-	{
-		if(baseGeometry == null) return;
-        vertexColors = new float[baseGeometry.length/3 * 4];
-        for(int c = 0; c < baseGeometry.length/3; c++)
-        {
-        	int i = c * 4;
-        	vertexColors[i] = color[0];
-        	vertexColors[i+1] = color[1];
-        	vertexColors[i+2] = color[2];
-        	vertexColors[i+3] = color[3];
-        }
-        
-        textureCoords = new float[baseGeometry.length/3 * 2];
-        float factor = height;
-        if(width > height) factor = width;
-        for(int c = 0; c < baseGeometry.length/3; c++)
-        {
-        	textureCoords[c*2] = baseGeometry[c*3]/factor;
-        	textureCoords[c*2+1] = 1-baseGeometry[c*3+1]/factor;
-        }
-        
-        // initialize color Buffer  
-        ByteBuffer vbb = ByteBuffer.allocateDirect(
-                // (# of coordinate values * 4 bytes per float)
-                vertexColors.length * 4
-            ).order(ByteOrder.nativeOrder());
-        colorBuffer = vbb.asFloatBuffer();
-        colorBuffer.put(vertexColors);    // add the coordinates to the FloatBuffer
-        colorBuffer.position(0);          // set the buffer to read the first coordinate
-        
-        // initialize vertex Buffer  
-        vbb = ByteBuffer.allocateDirect(
-                // (# of coordinate values * 4 bytes per float)
-                baseGeometry.length * 4
-            ).order(ByteOrder.nativeOrder());
-        geometryBuffer = vbb.asFloatBuffer();
-        geometryBuffer.put(baseGeometry);    // add the coordinates to the FloatBuffer
-        geometryBuffer.position(0);          // set the buffer to read the first coordinate
-        
-        // initialize texture Buffer  
-        vbb = ByteBuffer.allocateDirect(
-                // (# of coordinate values * 4 bytes per float)
-                textureCoords.length * 4
-            ).order(ByteOrder.nativeOrder());
-        textureBuffer = vbb.asFloatBuffer();
-        textureBuffer.put(textureCoords);    // add the coordinates to the FloatBuffer
-        textureBuffer.position(0);          // set the buffer to read the first coordinate
-	}
 	
 	public float getRotation()
 	{
@@ -127,6 +67,11 @@ public class Drawable extends Point2D
 	{
 		buildGeometry(viewWidth, viewHeight);
 		finalizeGeometry();
+		if(geometry != null && geometry.hasChanged)
+		{
+			geometry.buildGeometry(viewWidth, viewHeight);
+			geometry.finalizeGeometry();
+		}
 		for(int i=0; i < drawables.size(); i++) {
 			if(!drawables.get(i).didInit) {
 				drawables.get(i).init(viewWidth, viewHeight);
@@ -142,18 +87,16 @@ public class Drawable extends Point2D
 	
 	public void reshape(float width, float height) 
 	{
-		buildGeometry(width, height);
-		finalizeGeometry();
+		if(geometry != null)
+		{
+			geometry.buildGeometry(width, height);
+			geometry.finalizeGeometry();
+		}
 	}
 
-	public FloatBuffer getGeometry() 
+	public Geometry getGeometry() 
 	{
-		return geometryBuffer;	
-	}
-
-	public int getNumPoints() 
-	{
-		return baseGeometry.length/3;
+		return geometry;	
 	}
 	
     public void addGLClickListener(GLClickListener listener)
@@ -177,10 +120,7 @@ public class Drawable extends Point2D
         }
     }
 
-	public void intersectTerrain(Terrain t, float[] intersect)
-	{
-		
-	}
+	public void intersectTerrain(Terrain t, float[] intersect) {}
 
 	public void underTerrain() 
 	{
@@ -190,5 +130,45 @@ public class Drawable extends Point2D
 	public void aboveTerrain() 
 	{
 		isUnderTerrain = false;
+	}
+	
+	public void setHeight(float h)
+	{
+		height = h;
+	}
+
+	public void setWidth(float w)
+	{
+		width = w;
+	}
+
+	public float getHeight()
+	{
+		return height;
+	}
+
+	public float getWidth()
+	{
+		return width;
+	}
+	
+	public void buildGeometry(float viewWidth, float viewHeight) {}
+	
+	public void finalizeGeometry()
+	{
+		if(vertices == null) return;
+        
+        // initialize vertex Buffer (# of coordinate values * 4 bytes per float)  
+		ByteBuffer vbb = ByteBuffer.allocateDirect(vertices.length * Float.SIZE);
+		vbb.order(ByteOrder.nativeOrder());
+        vertexBuffer = vbb.asFloatBuffer();
+        // add the coordinates to the FloatBuffer
+        vertexBuffer.put(vertices);
+        vertexBuffer.rewind();
+	}
+	
+	public int getNumPoints() 
+	{
+		return vertices.length/3;
 	}
 }

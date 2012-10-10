@@ -1,28 +1,13 @@
 package poomonkeys.common;
 
-import javax.media.opengl.GL2;
-
 public class Dirt extends Drawable
 {
 	public float volume;
 	float min_index, max_index;
-
-	public void buildGeometry(float viewWidth, float viewHeight)
+	
+	public Dirt()
 	{
-		baseGeometry = new float[4 * 3];
-		baseGeometry[0] = -width / 2;
-		baseGeometry[1] = -height / 2;
-		baseGeometry[2] = 0;
-		baseGeometry[3] = -width / 2;
-		baseGeometry[4] = height / 2;
-		baseGeometry[5] = 0;
-		baseGeometry[6] = width / 2;
-		baseGeometry[7] = height / 2;
-		baseGeometry[8] = 0;
-		baseGeometry[9] = width / 2;
-		baseGeometry[10] = -height / 2;
-		baseGeometry[11] = 0;
-		drawMode = GL2.GL_LINE_LOOP;
+		geometry = DirtGeometry.getInstance();
 	}
 
 	public void intersectTerrain(Terrain t, float[] intersect)
@@ -93,5 +78,18 @@ public class Dirt extends Drawable
 		super.underTerrain();
 		this.removeFromGLEngine = true;
 		this.removeFromPhysicsEngine = true;
+		//System.out.println("dirt missed");
+	}
+	
+	public void setHeight(float h)
+	{
+		super.setHeight(h);
+		scale.y = h;
+	}
+
+	public void setWidth(float w)
+	{
+		super.setWidth(w);
+		scale.x = w;
 	}
 }

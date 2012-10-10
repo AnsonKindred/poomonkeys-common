@@ -12,14 +12,14 @@ public class FireButton extends Drawable
 	
 	public void buildGeometry(float viewWidth, float viewHeight)
 	{
-		baseGeometry = new float[12];
-		baseGeometry[0]=0; baseGeometry[1]=0; baseGeometry[2]=0;
-		baseGeometry[3]=0; baseGeometry[4]=HEIGHT; baseGeometry[5]=0;
-		baseGeometry[6]=WIDTH; baseGeometry[7]=0; baseGeometry[8]=0;
-		baseGeometry[9]=WIDTH; baseGeometry[10]=HEIGHT; baseGeometry[11]=0;
+		vertices = new float[12];
+		vertices[0]=0; vertices[1]=0; vertices[2]=0;
+		vertices[3]=0; vertices[4]=HEIGHT; vertices[5]=0;
+		vertices[6]=WIDTH; vertices[7]=0; vertices[8]=0;
+		vertices[9]=WIDTH; vertices[10]=HEIGHT; vertices[11]=0;
 		this.drawMode = GL2.GL_TRIANGLE_STRIP;
-		this.x = 0;
-		this.y = 0;
+		this.p[0] = 0;
+		this.p[1] = 0;
 		this.width = WIDTH;
 		this.height = HEIGHT;
 		

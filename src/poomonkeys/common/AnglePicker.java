@@ -22,7 +22,7 @@ public class AnglePicker extends Drawable
 	
 	public void buildGeometry(float viewWidth, float viewHeight)
 	{
-		radius = Math.min(viewHeight, AimingHUD.getInstance().divider.x - this.circle.x)*RADIUS;
+		radius = Math.min(viewHeight, AimingHUD.getInstance().divider.p[0] - this.circle.p[0])*RADIUS;
 		lineLength = LINE_LENGTH*radius;
 		
 		float[] circle_geometry = new float[CIRCLE_RES*3];
@@ -32,17 +32,17 @@ public class AnglePicker extends Drawable
 			circle_geometry[i+1] = (float) Math.cos(((1.f*c_i)/CIRCLE_RES)*2*Math.PI)*radius;
 			circle_geometry[i+2] = 0;
 		}		
-		circle.baseGeometry = circle_geometry;
+		circle.vertices = circle_geometry;
 		circle.drawMode = GL2.GL_LINE_LOOP;
 
 		float[] line_geometry = {0, 0, 0, 0, lineLength, 0};
-		line.baseGeometry = line_geometry;
+		line.vertices = line_geometry;
 		line.drawMode = GL2.GL_LINES;
 	}
 	
 	
 	public void touch(float x, float y)
 	{
-		line.setRotation(x-this.line.x, y-this.line.y);
+		line.setRotation(x-this.line.p[0], y-this.line.p[1]);
 	}
 }
