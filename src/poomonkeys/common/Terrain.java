@@ -1,6 +1,5 @@
 package poomonkeys.common;
 
-import java.util.ArrayList;
 import javax.media.opengl.GL2;
 
 public class Terrain extends Drawable
@@ -8,15 +7,18 @@ public class Terrain extends Drawable
 
 	static final int NUM_POINTS = 128;
 	static final float DIRT_SIZE = .1f;
-	static final float DIRT_VISCOSITY = 1.5f;
+	static final float DIRT_VISCOSITY = 1.1f;
 	float segmentWidth;
 	float points[] = new float[NUM_POINTS];
 	float previousPoints[] = new float[NUM_POINTS];
 	float offsets[] = new float[NUM_POINTS];
 	boolean needsUpdate;
+	
+	GameEngine engine;
 
-	public Terrain() 
+	public Terrain(GameEngine e) 
 	{
+		engine = e;
 	}
 	
 	public void addTankRandom(Tank tank)
@@ -48,30 +50,23 @@ public class Terrain extends Drawable
 		float max_x = (max_index) * segmentWidth;
 		
 		float totalDirtVolume = 0;
-		ArrayList<Dirt> dirt = null;
+		int num_dirts = 0;
 		synchronized(this)
 		{
-			dirt = _generateDirtpoints(min_x, max_x, x, y, r);
+			num_dirts = _generateDirtpoints(min_x, max_x, x, y, r);
 			totalDirtVolume = _collapseToCircleBottom(min_index, max_index, x, y, r);
+			float individualDirtVolume = totalDirtVolume / num_dirts;
+			float[] dirt = engine.getMovables();
+			for (int d = 0; d < num_dirts; d++)
+			{
+				int volume_index = (engine.getNumMovables() - d)*GameEngine.ITEMS_PER_MOVABLE+GameEngine.VOLUME;
+				dirt[volume_index] = individualDirtVolume;
+			}
 		}
-		// Assign a portion of the removed dirt volume to each dirt point
-		float individualDirtVolume = totalDirtVolume / dirt.size();
-		for (int d = 0; d < dirt.size(); d++)
-		{
-			Dirt dirtPoint = dirt.get(d);
-			dirtPoint.volume = individualDirtVolume;
-		}
-		PhysicsController physicsController = PhysicsController.getInstance(this);
-		physicsController.addCollidables((ArrayList<? extends Drawable>)dirt);
-		float[] f = new float[3];
-		f[0] = x; f[1] = y; f[2] = 10;
-		physicsController.pointForces.add(f);
 	}
 
-	private ArrayList<Dirt> _generateDirtpoints(float min_x, float max_x, float x, float y, float r)
+	private int _generateDirtpoints(float min_x, float max_x, float x, float y, float r)
 	{
-		ArrayList<Dirt> dirt = new ArrayList<Dirt>();
-		
 		float explosion_width = Math.abs(max_x - min_x);
 		int num_dirt_columns = (int) ((explosion_width + segmentWidth) / (2 * DIRT_SIZE));
 		float gapTotal = (explosion_width + segmentWidth) % (2 * DIRT_SIZE);
@@ -79,55 +74,48 @@ public class Terrain extends Drawable
 		float col_x = min_x - segmentWidth/2 + DIRT_SIZE + gap/2;
 		float end_x = max_x + segmentWidth/2 - DIRT_SIZE - gap/2;
 		float EPSILON = .0001f;
+		int count = 0;
+		
+		DirtGeometry geom = DirtGeometry.getInstance(DIRT_SIZE * 2 + gap);
+		
 		for (; col_x <= end_x + EPSILON; col_x += DIRT_SIZE * 2 + gap)
 		{
-			_generateDirtColumn(col_x, x, y, r, gap, dirt);
-		}
-
-		return dirt;
-	}
-
-	private float _generateDirtColumn(float col_x, float x, float y, float r, float gap, ArrayList<Dirt> dirt)
-	{
-		float thing = (float) (r * r - Math.pow(col_x - x, 2));
-		float offset = 0;
-		if(thing > 0)
-		{
-			offset = (float) Math.sqrt(thing);
-		}
-		else
-		{
-			offset = 0;
-		}
-		float tCircleY = (float) (offset + y);
-
-		int iFromX = (int) (col_x / segmentWidth);
-		if(iFromX < 0 || iFromX >= points.length-1)
-		{
-			return 0;
-		}
-		
-		float xPercent = (col_x % segmentWidth) / segmentWidth;
-		float p1y = points[iFromX];
-		float p2y = points[iFromX + 1];
-		float top = p1y + (p2y - p1y) * xPercent;
-		if (top > tCircleY)
-		{
-			float d = 0;
-			while (tCircleY + d <= top)
+			float thing = (float) (r * r - Math.pow(col_x - x, 2));
+			float offset = 0;
+			if(thing > 0)
 			{
-				Dirt dirtPoint = new Dirt();
-				dirtPoint.p[0] = col_x;
-				dirtPoint.p[1] = tCircleY + d;
-				dirtPoint.setWidth(DIRT_SIZE * 2 + gap);
-				dirtPoint.setHeight(DIRT_SIZE * 2 + gap);
-				dirt.add(dirtPoint);
-				registerDrawable(dirtPoint);
-				d += DIRT_SIZE * 2 + gap;
+				offset = (float) Math.sqrt(thing);
+			}
+			else
+			{
+				offset = 0;
+			}
+			float tCircleY = (float) (offset + y);
+
+			int iFromX = (int) (col_x / segmentWidth);
+			if(iFromX < 0 || iFromX >= points.length-1)
+			{
+				return 0;
+			}
+			
+			float xPercent = (col_x % segmentWidth) / segmentWidth;
+			float p1y = points[iFromX];
+			float p2y = points[iFromX + 1];
+			float top = p1y + (p2y - p1y) * xPercent;
+			
+			if (top > tCircleY)
+			{
+				float d = 0;
+				while (tCircleY + d <= top)
+				{
+					engine.addMovable(col_x, tCircleY+d, geom);
+					d += DIRT_SIZE * 2 + gap;
+					count++;
+				}
 			}
 		}
 
-		return top - tCircleY;
+		return count;
 	}
 	
 	/*
@@ -190,7 +178,7 @@ public class Terrain extends Drawable
 		drawMode = GL2.GL_LINE_STRIP;
 	}
 
-	public void dropDirt(float x, float y) 
+	/*public void dropDirt(float x, float y) 
 	{
 		PhysicsController physicsController = PhysicsController.getInstance(this);
 		Dirt dirtPoint = new Dirt();
@@ -202,5 +190,5 @@ public class Terrain extends Drawable
 		dirtPoint.volume = 1;
 		physicsController.addCollidable(dirtPoint);
 		registerDrawable(dirtPoint);
-	}
+	}*/
 }

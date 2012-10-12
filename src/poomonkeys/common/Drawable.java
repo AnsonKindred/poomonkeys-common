@@ -21,8 +21,8 @@ public class Drawable
 	public float rotation = 0;
 	public Point2D scale = new Point2D(1, 1);
 	public float slope    = 0;
-	protected float width = 0;
-	protected float height = 0;
+	
+	float width, height;
 	
 	public Geometry geometry = null;
 	public FloatBuffer vertexBuffer  = null;

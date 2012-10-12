@@ -20,6 +20,9 @@ public class Geometry
 	
 	public boolean hasChanged = true;
 	public boolean needsCompile = false;
+
+	protected float width = 0;
+	protected float height = 0;
 	
 	protected static Geometry instance = null;
 	

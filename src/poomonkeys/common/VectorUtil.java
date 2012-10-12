@@ -55,7 +55,7 @@ class VectorUtil
     
     public static float mag2D(float[] p)
 	{
-		return (float) Math.sqrt(Math.pow(p[0], 2)+Math.pow(p[1], 2));
+		return (float) Math.sqrt(p[0]*p[0]+p[1]*p[1]);
 	}
 
 	public static void scaleTo2D(float[] p, float mag)
@@ -83,4 +83,8 @@ class VectorUtil
 		return (float) Math.sqrt(Math.pow(p2[0]-p1[0], 2) + Math.pow(p2[1]-p1[1], 2));
 	}
 
+	static float distance(float[] p1, float p2x, float p2y)
+	{
+		return (float) Math.sqrt(Math.pow(p2x-p1[0], 2) + Math.pow(p2y-p1[1], 2));
+	}
 }
