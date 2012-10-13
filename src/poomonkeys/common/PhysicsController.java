@@ -205,6 +205,7 @@ public class PhysicsController extends Thread
 								if(firstIntersection[2] == Float.MAX_VALUE)
 								{
 									engine.removeMovable(i);
+									//System.out.println("Dirt fucking missed");
 								}
 								else if(firstIntersection[2] != Float.MAX_VALUE)
 								{
