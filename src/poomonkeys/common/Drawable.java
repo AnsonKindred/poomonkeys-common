@@ -122,7 +122,7 @@ public class Drawable
 
 	public void intersectTerrain(Terrain t, float[] intersect) {}
 
-	public void underTerrain() 
+	public void underTerrain(Terrain t) 
 	{
 		isUnderTerrain = true;
 	}

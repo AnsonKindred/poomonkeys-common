@@ -42,8 +42,8 @@ public class Terrain extends Drawable
 	public void explodeRectangle(float x, float y, float r)
 	{
 		// The min and max terrain index that lies within the tank's radius
-		int min_index = Math.max(0, (int) ((x - r) / segmentWidth));
-		int max_index = Math.min(NUM_POINTS - 1, (int) ((x + r) / segmentWidth) + 1);
+		int min_index = Math.max(0, (int) ((x - r) / segmentWidth) + 1);
+		int max_index = Math.min(NUM_POINTS - 1, (int) ((x + r) / segmentWidth));
 
 		// The actual x value at the min and max indexes
 		float min_x = (min_index) * segmentWidth;

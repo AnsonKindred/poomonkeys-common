@@ -370,7 +370,7 @@ public class PhysicsController extends Thread
 									// Somehow a collision got missed, at least let the drawable know that it is beneath the terrain
 									if(firstIntersection[2] == Float.MAX_VALUE)
 									{
-										d.underTerrain();
+										d.underTerrain(terrain);
 									}
 								}
 								else
