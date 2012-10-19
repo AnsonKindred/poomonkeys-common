@@ -419,6 +419,7 @@ public class PhysicsController extends Thread
 						{
 							d.p[0] += d.v[0];
 							d.p[1] += d.v[1];
+
 						}
 					}
 				}
