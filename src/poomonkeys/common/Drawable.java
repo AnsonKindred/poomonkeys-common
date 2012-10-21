@@ -33,6 +33,7 @@ public class Drawable
 	public boolean removeFromGLEngine = false;
 	public boolean removeFromPhysicsEngine = false;
 	public boolean isUnderTerrain;
+	public boolean isTouchingTerrain = true;
 	
 	public void registerDrawable(Drawable d)
     {
