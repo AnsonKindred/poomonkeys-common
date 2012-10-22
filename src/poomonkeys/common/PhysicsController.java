@@ -426,6 +426,8 @@ public class PhysicsController extends Thread
 							itr.remove();
 						} else
 						{
+							// dont want this to run when an intersection has
+							// happend this timestep
 							d.p[0] += d.v[0];
 							d.p[1] += d.v[1];
 

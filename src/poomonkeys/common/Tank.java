@@ -48,7 +48,7 @@ public class Tank extends Drawable
 		// removeFromPhysicsEngine = true;
 		float velocityVector = (float) Math.sqrt((this.v[0] * this.v[0]) + this.v[1] * this.v[1]);
 		float force = velocityVector * m;
-		if (force > 5000000)
+		if (force > 1000)
 		{
 			float xDistance = (.5f * m * (this.v[0] * this.v[0]));
 			float yDistance = (.5f * m * (this.v[1] * this.v[1]));
@@ -79,12 +79,34 @@ public class Tank extends Drawable
 			// these end up as 0 in denominator
 			if (lX + lY == 0)
 			{
-				lX = (index - 1) * t.segmentWidth - intersect[0];
-				lY = (t.points[index - 1] + t.offsets[index - 1]) - intersect[1];
+				return;
+				// lX = (index - 1) * t.segmentWidth - intersect[0];
+				// lY = (t.points[index - 1] + t.offsets[index - 1]) -
+				// intersect[1];
+			}
+			if (lX == t.segmentWidth)
+			{
+				if (this.v[0] > 0 && t.points[index + 2] < t.points[index + 1])
+				{
+					return;
+				} else if (this.v[0] > 0 && t.points[index + 2] >= t.points[index + 1])
+				{
+					// actually rX and rY
+					lX = (index + 2) * t.segmentWidth - intersect[0];
+					lY = (t.points[index + 2] + t.offsets[index + 2]) - intersect[1];
+				} else if (this.v[0] <= 0 && t.points[index - 1] < t.points[index])
+				{
+					return;
+				} else if (this.v[0] <= 0 && t.points[index - 1] >= t.points[index])
+				{
+					// actually rX and rY
+					lX = (index - 1) * t.segmentWidth - intersect[0];
+					lY = (t.points[index - 1] + t.offsets[index - 1]) - intersect[1];
+				}
+
 			}
 			float dX = this.v[0];
 			float dY = this.v[1];
-
 			float dotProduct = lX * dX + lY * dY;
 			float angle = (float) Math.acos(dotProduct / (Math.sqrt(lX * lX + lY * lY) * Math.sqrt(dX * dX + dY * dY)));
 			if (angle > Math.PI / 2)
@@ -92,23 +114,20 @@ public class Tank extends Drawable
 				float normalDistance = (float) Math.sqrt(lX * lX + lY * lY);
 				float normalLX = lX / normalDistance;
 				float normalLY = lY / normalDistance;
-				// float x = (float) (velocityVector * Math.cos(angle));
-
-				this.v[0] = velocityVector * normalLX;
-				this.v[1] = velocityVector * normalLY;
+				this.v[0] = -velocityVector * normalLX;
+				this.v[1] = -velocityVector * normalLY;
 			} else
 			{
 				// removeFromPhysicsEngine = true;
 				float normalDistance = (float) Math.sqrt(lX * lX + lY * lY);
-				System.out.println(normalDistance);
+				//System.out.println(normalDistance);
 				float normalLX = lX / normalDistance;
 				float normalLY = lY / normalDistance;
-				// float x = (float) (velocityVector * Math.cos(angle));
 
 				this.v[0] = velocityVector * normalLX;
 				this.v[1] = velocityVector * normalLY;
 			}
-			System.out.println(this.v[0]);
+			System.out.println("x"+this.v[0]);
 			System.out.println(this.v[1]);
 
 			// this.v[0] = 0;
