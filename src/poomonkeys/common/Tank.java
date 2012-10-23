@@ -82,7 +82,7 @@ public class Tank extends Drawable
 			// attempt to fix error explained two lines above
 			if (intersect[0] - (index-1) * t.segmentWidth > t.segmentWidth - .001 && intersect[0] - (index-1) * t.segmentWidth < t.segmentWidth + .001)
 			{
-				//index--;
+				index--;
 				// removeFromPhysicsEngine = true;
 			}
 			index = Math.max(0, index);
