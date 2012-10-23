@@ -34,6 +34,7 @@ public class Drawable
 	public boolean removeFromPhysicsEngine = false;
 	public boolean isUnderTerrain;
 	public boolean isTouchingTerrain = true;
+	public boolean needsPositionUpdated = true;
 	
 	public void registerDrawable(Drawable d)
     {

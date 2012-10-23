@@ -43,8 +43,13 @@ public class Tank extends Drawable
 
 	public void intersectTerrain(Terrain t, float[] intersect)
 	{
+		if (intersect[2] > -.00001 && intersect[2] < .00001)
+		{
+			this.needsPositionUpdated = true;
+		}
 		this.p[0] += this.v[0] * intersect[2];
 		this.p[1] += this.v[1] * intersect[2];
+		System.out.println("t" + intersect[2]);
 		// removeFromPhysicsEngine = true;
 		float velocityVector = (float) Math.sqrt((this.v[0] * this.v[0]) + this.v[1] * this.v[1]);
 		float force = velocityVector * m;
@@ -65,70 +70,92 @@ public class Tank extends Drawable
 			t.explodeRectangle(this.p[0], this.p[1], width / 2);
 			this.v[0] = 0;
 			this.v[1] = 0;
+			// System.out.println("x" + this.v[0]);
+			// System.out.println(this.v[1]);
 			removeFromPhysicsEngine = true;
 		} else
 		{
+			// if not exactly on segmentwidth then it might round down and cause
+			// horrible
+			// on the equalling segmentwidth down below
 			int index = (int) (intersect[0] / t.segmentWidth);
+			// attempt to fix error explained two lines above
+			if (intersect[0] - (index-1) * t.segmentWidth > t.segmentWidth - .001 && intersect[0] - (index-1) * t.segmentWidth < t.segmentWidth + .001)
+			{
+				index--;
+				// removeFromPhysicsEngine = true;
+			}
 			index = Math.max(0, index);
 			index = Math.min(t.points.length - 2, index);
 
-			float lX = index * t.segmentWidth - intersect[0];
-			float lY = (t.points[index] + t.offsets[index]) - intersect[1];
+			float vectorToLeftTerrainPointX = index * t.segmentWidth - intersect[0];
+			float vectorToLeftTerrainPointY = (t.points[index] + t.offsets[index]) - intersect[1];
 			// if its on an endpoint, its on an endpoint for two different
 			// linesegments so it chooses the one thats exactly an endpoint and
 			// these end up as 0 in denominator
-			if (lX + lY == 0)
+			if (vectorToLeftTerrainPointX + vectorToLeftTerrainPointY >-.0001 && vectorToLeftTerrainPointX + vectorToLeftTerrainPointY < .0001)
 			{
-				return;
+				vectorToLeftTerrainPointX = t.segmentWidth;
 				// lX = (index - 1) * t.segmentWidth - intersect[0];
 				// lY = (t.points[index - 1] + t.offsets[index - 1]) -
 				// intersect[1];
 			}
-			if (lX == t.segmentWidth)
+			// if width is = segmentWidth
+			if (vectorToLeftTerrainPointX > t.segmentWidth - .1 && vectorToLeftTerrainPointX < t.segmentWidth + .1)
 			{
+				//removeFromPhysicsEngine = true;
 				if (this.v[0] > 0 && t.points[index + 2] < t.points[index + 1])
 				{
 					return;
 				} else if (this.v[0] > 0 && t.points[index + 2] >= t.points[index + 1])
 				{
 					// actually rX and rY
-					lX = (index + 2) * t.segmentWidth - intersect[0];
-					lY = (t.points[index + 2] + t.offsets[index + 2]) - intersect[1];
-				} else if (this.v[0] <= 0 && t.points[index - 1] < t.points[index])
+					vectorToLeftTerrainPointX = (index + 2) * t.segmentWidth - intersect[0];
+					vectorToLeftTerrainPointY = (t.points[index + 2] + t.offsets[index + 2]) - intersect[1];
+				} else if (this.v[0] <= 0
+						&& !isLeft(index * t.segmentWidth, t.points[index], (index - 1) * t.segmentWidth, t.points[index - 1], intersect[0] + this.v[0],
+								intersect[1] + this.v[1]))
 				{
 					return;
-				} else if (this.v[0] <= 0 && t.points[index - 1] >= t.points[index])
+				} else if (this.v[0] <= 0
+						&& isLeft(index * t.segmentWidth, t.points[index], (index - 1) * t.segmentWidth, t.points[index - 1], intersect[0] + this.v[0],
+								intersect[1] + this.v[1]))
 				{
-					// actually rX and rY
-					lX = (index - 1) * t.segmentWidth - intersect[0];
-					lY = (t.points[index - 1] + t.offsets[index - 1]) - intersect[1];
+					System.out.println("boobs");
+					// removeFromPhysicsEngine = true;
+					vectorToLeftTerrainPointX = (index - 1) * t.segmentWidth - index * t.segmentWidth;
+					vectorToLeftTerrainPointY = (t.points[index - 1] + t.offsets[index - 1]) - (t.points[index] + t.offsets[index]);
 				}
 
 			}
 			float dX = this.v[0];
 			float dY = this.v[1];
-			float dotProduct = lX * dX + lY * dY;
-			float angle = (float) Math.acos(dotProduct / (Math.sqrt(lX * lX + lY * lY) * Math.sqrt(dX * dX + dY * dY)));
+			float dotProduct = vectorToLeftTerrainPointX * dX + vectorToLeftTerrainPointY * dY;
+			float angle = (float) Math.acos(dotProduct
+					/ (Math.sqrt(vectorToLeftTerrainPointX * vectorToLeftTerrainPointX + vectorToLeftTerrainPointY * vectorToLeftTerrainPointY) * Math.sqrt(dX
+							* dX + dY * dY)));
 			if (angle > Math.PI / 2)
 			{
-				float normalDistance = (float) Math.sqrt(lX * lX + lY * lY);
-				float normalLX = lX / normalDistance;
-				float normalLY = lY / normalDistance;
+				float normalDistance = (float) Math.sqrt(vectorToLeftTerrainPointX * vectorToLeftTerrainPointX + vectorToLeftTerrainPointY
+						* vectorToLeftTerrainPointY);
+				float normalLX = vectorToLeftTerrainPointX / normalDistance;
+				float normalLY = vectorToLeftTerrainPointY / normalDistance;
 				this.v[0] = -velocityVector * normalLX;
 				this.v[1] = -velocityVector * normalLY;
 			} else
 			{
 				// removeFromPhysicsEngine = true;
-				float normalDistance = (float) Math.sqrt(lX * lX + lY * lY);
-				//System.out.println(normalDistance);
-				float normalLX = lX / normalDistance;
-				float normalLY = lY / normalDistance;
+				float normalDistance = (float) Math.sqrt(vectorToLeftTerrainPointX * vectorToLeftTerrainPointX + vectorToLeftTerrainPointY
+						* vectorToLeftTerrainPointY);
+				// System.out.println(normalDistance);
+				float normalLX = vectorToLeftTerrainPointX / normalDistance;
+				float normalLY = vectorToLeftTerrainPointY / normalDistance;
 
 				this.v[0] = velocityVector * normalLX;
 				this.v[1] = velocityVector * normalLY;
 			}
-			System.out.println("x"+this.v[0]);
-			System.out.println(this.v[1]);
+			//System.out.println("x" + this.v[0]);
+			//System.out.println(this.v[1]);
 
 			// this.v[0] = 0;
 			// this.v[1] = 0;
@@ -137,11 +164,18 @@ public class Tank extends Drawable
 
 	public void underTerrain(Terrain t)
 	{
-		System.out.println("underT");
+		// System.out.println("x" + this.v[0]);
+		// System.out.println(this.v[1]);
+		// System.out.println("underT");
 		float leftX = this.p[0] - width / 2;
 		float leftY = this.p[1] - height / 2;
 		float rightX = this.p[0] + width / 2;
 		float rightY = this.p[1] - height / 2;
+		System.out.println("x" + this.v[0]);
+		System.out.println(this.v[1]);
+		System.out.println(leftX * t.segmentWidth);
+		System.out.println((int) (leftX * t.segmentWidth));
+		System.out.println("underT");
 		float rPercentX = ((this.p[0] + width / 2) / t.segmentWidth) - (int) ((this.p[0] + width / 2) / t.segmentWidth);
 		float rLandY = t.points[(int) (rightX / t.segmentWidth)] + (t.points[(int) (rightX / t.segmentWidth) + 1] - t.points[(int) (rightX / t.segmentWidth)])
 				* rPercentX;
@@ -150,28 +184,19 @@ public class Tank extends Drawable
 				* lPercentX;
 		if (rLandY - rightY >= lLandY - leftY)
 		{
-			this.p[0] = rightX - width / 2;
-			this.p[1] = rLandY + height / 2;
+			this.p[0] = rightX - width / 2 + 1f;
+			this.p[1] = rLandY + height / 2 + 1f;
 		} else if (rLandY - rightY < lLandY - leftY)
 		{
-			this.p[0] = leftX + width / 2;
-			this.p[1] = lLandY + height / 2;
+			this.p[0] = leftX + width / 2 + 1f;
+			this.p[1] = lLandY + height / 2 + 1f;
 		}
 		// removeFromPhysicsEngine = true;
 	}
 
-	// credit jeff_g on forum.processing.org
-	public static float fastSqrt(float x)
+	// checks to see if point C lies to the left of line segment AB
+	public boolean isLeft(float aX, float aY, float bX, float bY, float cX, float cY)
 	{
-		return Float.intBitsToFloat(532483686 + (Float.floatToRawIntBits(x) >> 1));
-	}
-
-	public float findCollision_pointAndLinesegment(float p1x, float p1y, float v1x, float v1y, float p2x, float p2y, float p3x, float p3y)
-	{
-		float denom = -p2x + p3x;
-		float dif = -p2y + p3y;
-		float t = (-p1y + p2y + p1x * dif / denom - p2x * dif / denom) / (-v1x * dif / denom + v1y);
-
-		return t;
+		return ((bX - aX) * (cY - aY) - (bY - aY) * (cX - aX)) > 0;
 	}
 }

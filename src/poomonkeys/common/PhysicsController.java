@@ -167,7 +167,7 @@ public class PhysicsController extends Thread
 											lastIntersect);
 									if (intersected)
 									{
-										if (lastIntersect[2] < firstIntersection[2])
+										if (lastIntersect[2] <= firstIntersection[2])
 										{
 											firstIntersection[0] = lastIntersect[0];
 											firstIntersection[1] = lastIntersect[1];
@@ -194,7 +194,7 @@ public class PhysicsController extends Thread
 											lastIntersect);
 									if (intersected)
 									{
-										if (lastIntersect[2] < firstIntersection[2])
+										if (lastIntersect[2] <= firstIntersection[2])
 										{
 											firstIntersection[0] = lastIntersect[0];
 											firstIntersection[1] = lastIntersect[1];
@@ -263,9 +263,6 @@ public class PhysicsController extends Thread
 						d.v[1] += d.a[1];
 						if (!d.isTouchingTerrain)
 						{
-							// System.out.println("boobs");
-							// System.out.println("Penises'");
-
 							d.v[1] += GRAVITY;
 						}
 						float next_x = d.p[0] + d.v[0];
@@ -338,7 +335,7 @@ public class PhysicsController extends Thread
 												lastIntersect);
 										if (intersected)
 										{
-											if (lastIntersect[2] < firstIntersection[2])
+											if (lastIntersect[2] <= firstIntersection[2])
 											{
 												firstIntersection[0] = lastIntersect[0];
 												firstIntersection[1] = lastIntersect[1];
@@ -365,7 +362,7 @@ public class PhysicsController extends Thread
 												lastIntersect);
 										if (intersected)
 										{
-											if (lastIntersect[2] < firstIntersection[2])
+											if (lastIntersect[2] <= firstIntersection[2])
 											{
 												firstIntersection[0] = lastIntersect[0];
 												firstIntersection[1] = lastIntersect[1];
@@ -380,6 +377,7 @@ public class PhysicsController extends Thread
 									if (firstIntersection[2] == Float.MAX_VALUE)
 									{
 										d.isTouchingTerrain = true;
+										// d.needsPositionUpdated = false;
 										d.underTerrain(terrain);
 									}
 								} else
@@ -402,7 +400,7 @@ public class PhysicsController extends Thread
 										boolean intersected = findCollision(segmentPoint, segmentV, leftPoint, d.v, rightPoint, d.v, lastIntersect);
 										if (intersected)
 										{
-											if (lastIntersect[2] < firstIntersection[2])
+											if (lastIntersect[2] <= firstIntersection[2])
 											{
 												firstIntersection[0] = lastIntersect[0];
 												firstIntersection[1] = lastIntersect[1];
@@ -415,6 +413,7 @@ public class PhysicsController extends Thread
 								if (firstIntersection[2] != Float.MAX_VALUE)
 								{
 									d.isTouchingTerrain = true;
+									d.needsPositionUpdated = false;
 									d.intersectTerrain(terrain, firstIntersection);
 								}
 							}
@@ -428,9 +427,17 @@ public class PhysicsController extends Thread
 						{
 							// dont want this to run when an intersection has
 							// happend this timestep
-							d.p[0] += d.v[0];
-							d.p[1] += d.v[1];
-
+							if (d.needsPositionUpdated)
+							{
+								d.v[0] = Math.min(1, d.v[0]);
+								d.v[1] = Math.min(1, d.v[1]);
+								d.p[0] += d.v[0];
+								d.p[1] += d.v[1];
+							}
+							if (!d.needsPositionUpdated)
+							{
+								d.needsPositionUpdated = true;
+							}
 						}
 					}
 				}
@@ -482,9 +489,11 @@ public class PhysicsController extends Thread
 		if (v2x > -EPSILON && v2x < EPSILON && v2y > -EPSILON && v2y < EPSILON && v3x > -EPSILON && v3x < EPSILON && v3y > -EPSILON && v3y < EPSILON)
 		{
 			t[0] = findCollision_pointAndLinesegment(p1x, p1y, v1x, v1y, p2x, p2y, p3x, p3y);
+			// if parallel, time = 0
 			if (Double.isNaN(t[0]) || Double.isInfinite(t[0]))
 			{
-				t[0] = 0;
+				System.out.println("isPareelal");
+				t[0] = 1;
 			}
 		}
 		// Line segment only moving vertically
@@ -607,6 +616,15 @@ public class PhysicsController extends Thread
 		float denom = -p2x + p3x;
 		float dif = -p2y + p3y;
 		float t = (-p1y + p2y + p1x * dif / denom - p2x * dif / denom) / (-v1x * dif / denom + v1y);
+		//if parallel
+		if ((-v1x * dif / denom + v1y) > -.0001 && (-v1x * dif / denom + v1y) < .0001)
+		{
+			t = 1;
+		}
+		if (denom > -.0001 && denom < .0001)
+		{
+			t = 1;
+		}
 		return t;
 	}
 
