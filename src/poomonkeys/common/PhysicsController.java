@@ -47,192 +47,193 @@ public class PhysicsController extends Thread
 			{
 			}
 
-			float[] movables = engine.getMovables();
-			Terrain terrain = engine.getTerrain();
-
-			if (terrain == null || (collidables.isEmpty() && engine.getNumMovables() == 0))
+			synchronized (GameEngine.terrainLock)
 			{
-				continue;
-			}
-
-			synchronized (terrain)
-			{
+				Terrain terrain = engine.getTerrain();
 				synchronized (GameEngine.movableLock)
 				{
-					int num_movables = engine.getNumMovables();
-					int lastGeometryID = (int) movables[GameEngine.GEOM];
-					Geometry geom = engine.getGeometry(lastGeometryID);
-					for (int i = 0; i < num_movables && i >= 0; i++)
+					ArrayList<Movable[]> movables = engine.getMovables();
+					boolean missedSomeDirt = false;
+					for(int g = 0; g < movables.size(); g++)
 					{
-						int movable_index = i * GameEngine.ITEMS_PER_MOVABLE;
-						boolean dirt_removed = false;
-						totalForce[0] = 0;
-						totalForce[1] = 0;
-						float x = movables[movable_index + GameEngine.X];
-						float y = movables[movable_index + GameEngine.Y];
-						float vx = movables[movable_index + GameEngine.VX];
-						float vy = movables[movable_index + GameEngine.VY];
-						float m = movables[movable_index + GameEngine.M];
-
-						if (movables[movable_index + GameEngine.GEOM] != lastGeometryID)
+						Movable[] instances = movables.get(g);
+						Geometry geometry = engine.getGeometry(g);
+						
+						for(int i = 0; i < geometry.num_instances; i++)
 						{
-							lastGeometryID = (int) movables[movable_index + GameEngine.GEOM];
-							geom = engine.getGeometry((int) movables[movable_index + GameEngine.GEOM]);
-						}
-
-						for (int f = 0; f < pointForces.size(); f++)
-						{
-							float[] force = pointForces.get(f);
-							float distance_squared = (force[0] - x) * (force[0] - x) + (force[1] - y) * (force[1] - y);
-							float distance = (float) Math.sqrt(distance_squared);
-							float distance_factor = (float) (1 / (1 + distance_squared));
-							forceDirection[0] = (x - force[0]) / distance;
-							forceDirection[1] = (y - force[1]) / distance;
-							totalForce[0] += forceDirection[0] * distance_factor * force[2];
-							totalForce[1] += forceDirection[1] * distance_factor * force[2];
-						}
-
-						float ax = totalForce[0] / m;
-						float ay = totalForce[1] / m;
-
-						vx += ax;
-						vy += ay;
-
-						vy += GRAVITY;
-						float next_x = x + vx;
-						float next_y = y + vy;
-
-						int iFromLeftX = (int) ((next_x - geom.width / 2) / terrain.segmentWidth);
-						int iFromRightX = (int) ((next_x + geom.width / 2) / terrain.segmentWidth);
-
-						if (iFromLeftX < 0 || iFromRightX >= terrain.points.length - 1)
-						{
-							engine.removeMovable(i);
-							dirt_removed = true;
-						} else
-						{
-							double leftPercent = ((next_x - geom.width / 2) % terrain.segmentWidth) / terrain.segmentWidth;
-							double rightPercent = ((next_x + geom.width / 2) % terrain.segmentWidth) / terrain.segmentWidth;
-							double landYatLeftX = terrain.points[iFromLeftX] + (terrain.points[iFromLeftX + 1] - terrain.points[iFromLeftX]) * leftPercent;
-							double landYatRightX = terrain.points[iFromRightX] + (terrain.points[iFromRightX + 1] - terrain.points[iFromRightX]) * rightPercent;
-
-							boolean leftIntersected = (next_y - geom.height / 2) <= landYatLeftX;
-							boolean rightIntersected = (next_y - geom.height / 2) <= landYatRightX;
-
-							if (leftIntersected || rightIntersected)
+							Movable instance = instances[i];
+							boolean dirt_removed = false;
+							totalForce[0] = 0;
+							totalForce[1] = 0;
+							float x = instance.x;
+							float y = instance.y;
+							float vx = instance.vx;
+							float vy = instance.vy;
+							float m = instance.m;
+	
+							for (int f = 0; f < pointForces.size(); f++)
 							{
-								int iFromPreviousLeftX = (int) ((x - geom.width / 2) / terrain.segmentWidth);
-								int left_min_index = iFromPreviousLeftX;
-								int left_max_index = iFromLeftX;
-								leftPoint[0] = x - geom.width / 2;
-								leftPoint[1] = y - geom.height / 2;
-
-								int iFromPreviousRightX = (int) ((x + geom.width / 2) / terrain.segmentWidth);
-								int right_min_index = iFromPreviousRightX;
-								int right_max_index = iFromRightX;
-								rightPoint[0] = x + geom.width / 2;
-								rightPoint[1] = y - geom.height / 2;
-
-								if (left_min_index > left_max_index)
-								{
-									int temp = left_min_index;
-									left_min_index = left_max_index;
-									left_max_index = temp;
-								}
-								if (right_min_index > right_max_index)
-								{
-									int temp = right_min_index;
-									right_min_index = right_max_index;
-									right_max_index = temp;
-								}
-
-								float firstIntersection[] = new float[3];
-								firstIntersection[2] = Float.MAX_VALUE;
-
-								for (int s = left_min_index; s <= left_max_index; s++)
-								{
-									float xFromIndex = s * terrain.segmentWidth;
-									float xFromNextIndex = (s + 1) * terrain.segmentWidth;
-
-									segmentLeft[0] = xFromIndex;
-									segmentLeft[1] = terrain.previousPoints[s];
-									segmentLeftV[0] = 0;
-									segmentLeftV[1] = terrain.points[s] - terrain.previousPoints[s];
-									segmentRight[0] = xFromNextIndex;
-									segmentRight[1] = terrain.previousPoints[s + 1];
-									segmentRightV[0] = 0;
-									segmentRightV[1] = terrain.points[s + 1] - terrain.previousPoints[s + 1];
-
-									boolean intersected = findCollision(leftPoint, vx, vy, segmentLeft, segmentLeftV, segmentRight, segmentRightV,
-											lastIntersect);
-									if (intersected)
-									{
-										if (lastIntersect[2] < firstIntersection[2])
-										{
-											firstIntersection[0] = lastIntersect[0];
-											firstIntersection[1] = lastIntersect[1];
-											firstIntersection[2] = lastIntersect[2];
-										}
-									}
-								}
-
-								for (int s = right_min_index; s <= right_max_index; s++)
-								{
-									float xFromIndex = s * terrain.segmentWidth;
-									float xFromNextIndex = (s + 1) * terrain.segmentWidth;
-
-									segmentLeft[0] = xFromIndex;
-									segmentLeft[1] = terrain.previousPoints[s];
-									segmentLeftV[0] = 0;
-									segmentLeftV[1] = terrain.points[s] - terrain.previousPoints[s];
-									segmentRight[0] = xFromNextIndex;
-									segmentRight[1] = terrain.previousPoints[s + 1];
-									segmentRightV[0] = 0;
-									segmentRightV[1] = terrain.points[s + 1] - terrain.previousPoints[s + 1];
-
-									boolean intersected = findCollision(rightPoint, vx, vy, segmentLeft, segmentLeftV, segmentRight, segmentRightV,
-											lastIntersect);
-									if (intersected)
-									{
-										if (lastIntersect[2] < firstIntersection[2])
-										{
-											firstIntersection[0] = lastIntersect[0];
-											firstIntersection[1] = lastIntersect[1];
-											firstIntersection[2] = lastIntersect[2];
-										}
-									}
-								}
-
-								// Somehow a collision got missed, at least let
-								// the drawable know that it is beneath the
-								// terrain
-								if (firstIntersection[2] == Float.MAX_VALUE)
-								{
-									engine.removeMovable(i);
-									// System.out.println("Dirt fucking missed");
-								} else if (firstIntersection[2] != Float.MAX_VALUE)
-								{
-									addDirtToTerrain(firstIntersection, i);
-								}
-
+								float[] force = pointForces.get(f);
+								float distance_squared = (force[0] - x) * (force[0] - x) + (force[1] - y) * (force[1] - y);
+								float distance = (float) Math.sqrt(distance_squared);
+								float distance_factor = (float) (1 / (1 + distance_squared));
+								forceDirection[0] = (x - force[0]) / distance;
+								forceDirection[1] = (y - force[1]) / distance;
+								totalForce[0] += forceDirection[0] * distance_factor * force[2];
+								totalForce[1] += forceDirection[1] * distance_factor * force[2];
+							}
+	
+							float ax = totalForce[0] / m;
+							float ay = totalForce[1] / m;
+	
+							vx += ax;
+							vy += ay;
+	
+							vy += GRAVITY;
+							float next_x = x + vx;
+							float next_y = y + vy;
+	
+							int iFromLeftX = (int) ((next_x - geometry.width / 2) / terrain.segmentWidth);
+							int iFromRightX = (int) ((next_x + geometry.width / 2) / terrain.segmentWidth);
+	
+							if (iFromLeftX < 0 || iFromRightX >= terrain.points.length - 1)
+							{
+								engine.removeMovable(g, i);
 								dirt_removed = true;
+							} 
+							else
+							{
+								double leftPercent = ((next_x - geometry.width / 2) % terrain.segmentWidth) / terrain.segmentWidth;
+								double rightPercent = ((next_x + geometry.width / 2) % terrain.segmentWidth) / terrain.segmentWidth;
+								double landYatLeftX = terrain.points[iFromLeftX] + (terrain.points[iFromLeftX + 1] - terrain.points[iFromLeftX]) * leftPercent;
+								double landYatRightX = terrain.points[iFromRightX] + (terrain.points[iFromRightX + 1] - terrain.points[iFromRightX]) * rightPercent;
+	
+								boolean leftIntersected = (next_y - geometry.height / 2) <= landYatLeftX;
+								boolean rightIntersected = (next_y - geometry.height / 2) <= landYatRightX;
+	
+								if (leftIntersected || rightIntersected)
+								{
+									int iFromPreviousLeftX = (int) ((x - geometry.width / 2) / terrain.segmentWidth);
+									int left_min_index = iFromPreviousLeftX;
+									int left_max_index = iFromLeftX;
+									leftPoint[0] = x - geometry.width / 2;
+									leftPoint[1] = y - geometry.height / 2;
+	
+									int iFromPreviousRightX = (int) ((x + geometry.width / 2) / terrain.segmentWidth);
+									int right_min_index = iFromPreviousRightX;
+									int right_max_index = iFromRightX;
+									rightPoint[0] = x + geometry.width / 2;
+									rightPoint[1] = y - geometry.height / 2;
+	
+									if (left_min_index > left_max_index)
+									{
+										int temp = left_min_index;
+										left_min_index = left_max_index;
+										left_max_index = temp;
+									}
+									if (right_min_index > right_max_index)
+									{
+										int temp = right_min_index;
+										right_min_index = right_max_index;
+										right_max_index = temp;
+									}
+	
+									float firstIntersection[] = new float[3];
+									firstIntersection[2] = Float.MAX_VALUE;
+	
+									for (int s = left_min_index; s <= left_max_index; s++)
+									{
+										float xFromIndex = s * terrain.segmentWidth;
+										float xFromNextIndex = (s + 1) * terrain.segmentWidth;
+	
+										segmentLeft[0] = xFromIndex;
+										segmentLeft[1] = terrain.previousPoints[s];
+										segmentLeftV[0] = 0;
+										segmentLeftV[1] = terrain.points[s] - terrain.previousPoints[s];
+										segmentRight[0] = xFromNextIndex;
+										segmentRight[1] = terrain.previousPoints[s + 1];
+										segmentRightV[0] = 0;
+										segmentRightV[1] = terrain.points[s + 1] - terrain.previousPoints[s + 1];
+	
+										boolean intersected = findCollision(leftPoint, vx, vy, segmentLeft, segmentLeftV, segmentRight, segmentRightV,
+												lastIntersect);
+										if (intersected)
+										{
+											if (lastIntersect[2] < firstIntersection[2])
+											{
+												firstIntersection[0] = lastIntersect[0];
+												firstIntersection[1] = lastIntersect[1];
+												firstIntersection[2] = lastIntersect[2];
+											}
+										}
+									}
+	
+									for (int s = right_min_index; s <= right_max_index; s++)
+									{
+										float xFromIndex = s * terrain.segmentWidth;
+										float xFromNextIndex = (s + 1) * terrain.segmentWidth;
+	
+										segmentLeft[0] = xFromIndex;
+										segmentLeft[1] = terrain.previousPoints[s];
+										segmentLeftV[0] = 0;
+										segmentLeftV[1] = terrain.points[s] - terrain.previousPoints[s];
+										segmentRight[0] = xFromNextIndex;
+										segmentRight[1] = terrain.previousPoints[s + 1];
+										segmentRightV[0] = 0;
+										segmentRightV[1] = terrain.points[s + 1] - terrain.previousPoints[s + 1];
+	
+										boolean intersected = findCollision(rightPoint, vx, vy, segmentLeft, segmentLeftV, segmentRight, segmentRightV,
+												lastIntersect);
+										if (intersected)
+										{
+											if (lastIntersect[2] < firstIntersection[2])
+											{
+												firstIntersection[0] = lastIntersect[0];
+												firstIntersection[1] = lastIntersect[1];
+												firstIntersection[2] = lastIntersect[2];
+											}
+										}
+									}
+	
+									// Somehow a collision got missed, at least let
+									// the drawable know that it is beneath the
+									// terrain
+									if (firstIntersection[2] == Float.MAX_VALUE)
+									{
+										engine.removeMovable(g, i);
+										System.out.println("Dirt fucking missed");
+										missedSomeDirt = true;
+									} 
+									else if (firstIntersection[2] != Float.MAX_VALUE)
+									{
+										addDirtToTerrain(firstIntersection, instance);
+										engine.removeMovable(g, i);
+									}
+	
+									dirt_removed = true;
+								}
+							}
+	
+							if (!dirt_removed)
+							{
+								x += vx;
+								y += vy;
+	
+								instance.x = x;
+								instance.y = y;
+								instance.vx = vx;
+								instance.vy = vy;
+							} 
+							else
+							{
+								i--;
 							}
 						}
+					}
 
-						if (!dirt_removed)
-						{
-							x += vx;
-							y += vy;
-
-							movables[movable_index + GameEngine.X] = x;
-							movables[movable_index + GameEngine.Y] = y;
-							movables[movable_index + GameEngine.VX] = vx;
-							movables[movable_index + GameEngine.VY] = vy;
-						} else
-						{
-							i--;
-							num_movables--;
-						}
+					if(missedSomeDirt)
+					{
+						System.out.println(" ");				
 					}
 				}
 				synchronized (collidables)
@@ -434,10 +435,10 @@ public class PhysicsController extends Thread
 						}
 					}
 				}
+
+				terrain.update();
 			}
-
-			terrain.update();
-
+			
 			pointForces.clear();
 		}
 	}
@@ -647,66 +648,63 @@ public class PhysicsController extends Thread
 		t[1] = (-B - sqrt) / (2 * A);
 	}
 
-	public void addDirtToTerrain(float[] intersect, int i)
+	public void addDirtToTerrain(float[] intersect, Movable m)
 	{
-		int dirt_index = (i * GameEngine.ITEMS_PER_MOVABLE);
-
-		Terrain t = engine.getTerrain();
-		float[] movables = engine.getMovables();
-		float dirtVolume = movables[dirt_index + GameEngine.VOLUME];
-
-		int index = (int) (intersect[0] / t.segmentWidth);
-		index = Math.max(0, index);
-		index = Math.min(t.points.length - 2, index);
-
-		float leftHeight = t.points[index];
-		float rightHeight = t.points[index + 1];
-
-		if (rightHeight < leftHeight)
+		synchronized(GameEngine.movableLock)
 		{
-			index++;
-		}
-
-		while (dirtVolume > .001 && index > 0 && index <= t.NUM_POINTS - 2)
-		{
-			float currentHeight = t.points[index] + t.offsets[index];
-			leftHeight = t.points[index - 1] + t.offsets[index - 1];
-			rightHeight = t.points[index + 1] + t.offsets[index + 1];
-
-			float rDiff = currentHeight - rightHeight;
-			float lDiff = currentHeight - leftHeight;
-
-			if (rDiff > 0 && rDiff >= lDiff)
+			Terrain t = engine.getTerrain();
+	
+			int index = (int) (intersect[0] / t.segmentWidth);
+			index = Math.max(0, index);
+			index = Math.min(t.points.length - 2, index);
+	
+			float leftHeight = t.points[index];
+			float rightHeight = t.points[index + 1];
+	
+			if (rightHeight < leftHeight)
 			{
-				float segmentLength = fastSqrt((float) (Math.pow((index + 1) * t.segmentWidth - index * t.segmentWidth, 2) + Math.pow(rightHeight
-						- currentHeight, 2)));
-				float slopeFactor = Math.min(.5f, (currentHeight - rightHeight) / segmentLength);
-				float amount = dirtVolume * (1 - slopeFactor) / t.DIRT_VISCOSITY;
-				t.offsets[index] += amount;
-				dirtVolume -= amount;
 				index++;
-			} else if (lDiff > 0 && lDiff >= rDiff)
-			{
-				float segmentLength = fastSqrt((float) (Math.pow((index - 1) * t.segmentWidth - index * t.segmentWidth, 2) + Math.pow(leftHeight
-						- currentHeight, 2)));
-				float slopeFactor = Math.min(.5f, (currentHeight - leftHeight) / segmentLength);
-				float amount = dirtVolume * (1 - slopeFactor) / t.DIRT_VISCOSITY;
-				t.offsets[index] += amount;
-				dirtVolume -= amount;
-				index--;
-			} else if (currentHeight <= leftHeight && currentHeight <= rightHeight)
-			{
-				// current point is lower than neighbors
-				float amount = dirtVolume / t.DIRT_VISCOSITY;
-				t.offsets[index] += amount;
-				dirtVolume -= amount;
 			}
+	
+			while (m.volume > .001 && index > 0 && index <= t.NUM_POINTS - 2)
+			{
+				float currentHeight = t.points[index] + t.offsets[index];
+				leftHeight = t.points[index - 1] + t.offsets[index - 1];
+				rightHeight = t.points[index + 1] + t.offsets[index + 1];
+	
+				float rDiff = currentHeight - rightHeight;
+				float lDiff = currentHeight - leftHeight;
+	
+				if (rDiff > 0 && rDiff >= lDiff)
+				{
+					float segmentLength = fastSqrt((float) (Math.pow((index + 1) * t.segmentWidth - index * t.segmentWidth, 2) + Math.pow(rightHeight
+							- currentHeight, 2)));
+					float slopeFactor = Math.min(.5f, (currentHeight - rightHeight) / segmentLength);
+					float amount = m.volume * (1 - slopeFactor) / t.DIRT_VISCOSITY;
+					t.offsets[index] += amount;
+					m.volume -= amount;
+					index++;
+				} else if (lDiff > 0 && lDiff >= rDiff)
+				{
+					float segmentLength = fastSqrt((float) (Math.pow((index - 1) * t.segmentWidth - index * t.segmentWidth, 2) + Math.pow(leftHeight
+							- currentHeight, 2)));
+					float slopeFactor = Math.min(.5f, (currentHeight - leftHeight) / segmentLength);
+					float amount = m.volume * (1 - slopeFactor) / t.DIRT_VISCOSITY;
+					t.offsets[index] += amount;
+					m.volume -= amount;
+					index--;
+				} else if (currentHeight <= leftHeight && currentHeight <= rightHeight)
+				{
+					// current point is lower than neighbors
+					float amount = m.volume / t.DIRT_VISCOSITY;
+					t.offsets[index] += amount;
+					m.volume -= amount;
+				}
+			}
+	
+			t.offsets[index] += m.volume;
+			m.volume = 0;
 		}
-
-		t.offsets[index] += dirtVolume;
-		dirtVolume = 0;
-
-		engine.removeMovable(i);
 	}
 
 	public void addCollidable(Drawable c)

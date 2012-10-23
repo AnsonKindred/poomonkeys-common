@@ -1,12 +1,13 @@
 package poomonkeys.common;
 
+import java.util.ArrayList;
 import java.util.Random;
 import javax.media.opengl.GL2;
 
 public class Terrain extends Drawable
 {
 
-	static final int NUM_POINTS = 16;
+	static final int NUM_POINTS = 256;
 	static final float DIRT_SIZE = .1f;
 	static final float DIRT_VISCOSITY = 1.1f;
 	float segmentWidth;
@@ -16,6 +17,7 @@ public class Terrain extends Drawable
 	boolean needsUpdate;
 
 	GameEngine engine;
+	private DirtGeometry lastDirtGeometry;
 
 	public Terrain(GameEngine e)
 	{
@@ -53,27 +55,19 @@ public class Terrain extends Drawable
 		int num_dirts = 0;
 		float totalDirtVolume = 0;
 
-		synchronized (this)
+		synchronized(GameEngine.terrainLock)
 		{
 			num_dirts = _generateDirtpointsRectangle(min_x, max_x, x, y, r);
 			totalDirtVolume = _collapseToRectangleBottom(min_index, max_index, x, y, r);
 			float individualDirtVolume = totalDirtVolume / num_dirts;
-			float[] movables = engine.getMovables();
-			int num_movables = engine.getNumMovables();
+			ArrayList<Movable[]> movables = engine.getMovables();
+			Movable[] instances = movables.get(lastDirtGeometry.geometryID);
 			for (int d = 0; d < num_dirts; d++)
 			{
-				int volume_index = (num_movables - d) * GameEngine.ITEMS_PER_MOVABLE + GameEngine.VOLUME;
-				movables[volume_index] = individualDirtVolume;
+				int index = (instances.length - d - 1);
+				instances[index].volume = individualDirtVolume;
 			}
 		}
-
-		/*
-		 * PhysicsController physicsController =
-		 * PhysicsController.getInstance(this);
-		 * physicsController.addCollidables((ArrayList<? extends
-		 * Drawable>)dirt); float[] f = new float[3]; f[0] = x; f[1] = y; f[2] =
-		 * 10; physicsController.pointForces.add(f);
-		 */
 	}
 
 	private int _generateDirtpointsRectangle(float min_x, float max_x, float x, float y, float r)
@@ -87,7 +81,7 @@ public class Terrain extends Drawable
 		float EPSILON = .0001f;
 		int count = 0;
 
-		DirtGeometry geom = DirtGeometry.getInstance(DIRT_SIZE * 2 + gap);
+		lastDirtGeometry = DirtGeometry.getInstance(DIRT_SIZE * 2 + gap);
 
 		for (; col_x <= end_x + EPSILON; col_x += DIRT_SIZE * 2 + gap)
 		{
@@ -117,7 +111,7 @@ public class Terrain extends Drawable
 				float d = 0;
 				while (tCircleY + d <= top)
 				{
-					engine.addMovable(col_x, tCircleY + d, geom);
+					engine.addMovable(col_x, tCircleY + d, lastDirtGeometry);
 					d += DIRT_SIZE * 2 + gap;
 				}
 				count += top - tCircleY;
@@ -170,16 +164,27 @@ public class Terrain extends Drawable
 
 		float totalDirtVolume = 0;
 		int num_dirts = 0;
-		synchronized (this)
+		synchronized(GameEngine.terrainLock)
 		{
 			num_dirts = _generateDirtpoints(min_x, max_x, x, y, r);
 			totalDirtVolume = _collapseToCircleBottom(min_index, max_index, x, y, r);
-			float individualDirtVolume = totalDirtVolume / num_dirts;
-			float[] dirt = engine.getMovables();
-			for (int d = 0; d < num_dirts; d++)
+			
+			if(num_dirts == 0) 
 			{
-				int volume_index = (engine.getNumMovables() - d) * GameEngine.ITEMS_PER_MOVABLE + GameEngine.VOLUME;
-				dirt[volume_index] = individualDirtVolume;
+				return;
+			}
+			
+			float individualDirtVolume = totalDirtVolume / num_dirts;
+
+			synchronized(GameEngine.movableLock)
+			{
+				ArrayList<Movable[]> movables = engine.getMovables();
+				Movable[] instances = movables.get(lastDirtGeometry.geometryID);
+				for (int d = 0; d < num_dirts; d++)
+				{
+					int index = (lastDirtGeometry.num_instances - d - 1);
+					instances[index].volume = individualDirtVolume;
+				}
 			}
 		}
 	}
@@ -195,7 +200,7 @@ public class Terrain extends Drawable
 		float EPSILON = .0001f;
 		int count = 0;
 
-		DirtGeometry geom = DirtGeometry.getInstance(DIRT_SIZE * 2 + gap);
+		lastDirtGeometry = DirtGeometry.getInstance(DIRT_SIZE * 2 + gap);
 
 		for (; col_x <= end_x + EPSILON; col_x += DIRT_SIZE * 2 + gap)
 		{
@@ -226,7 +231,7 @@ public class Terrain extends Drawable
 				float d = 0;
 				while (tCircleY + d <= top)
 				{
-					engine.addMovable(col_x, tCircleY + d, geom);
+					engine.addMovable(col_x, tCircleY + d, lastDirtGeometry);
 					d += DIRT_SIZE * 2 + gap;
 					count++;
 				}

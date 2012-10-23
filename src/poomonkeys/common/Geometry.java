@@ -13,7 +13,6 @@ public class Geometry
 	public FloatBuffer vertexBuffer  = null;
 	public float[] vertices = null;
 	
-	public int textureBufferID = 0;
 	public int vertexBufferID = 0;
 	
 	public int drawMode;
@@ -23,6 +22,9 @@ public class Geometry
 
 	protected float width = 0;
 	protected float height = 0;
+	
+	public int num_instances;
+	public int geometryID = -1;
 	
 	protected static Geometry instance = null;
 	

@@ -29,21 +29,21 @@ public class DirtGeometry extends Geometry
 	
 	public void buildGeometry(float viewWidth, float viewHeight)
 	{
-		vertices = new float[4 * 3];
+		vertices = new float[6 * 2];
 		vertices[0] = -width/2;
 		vertices[1] = -height/2;
-		vertices[2] = 0;
-		vertices[3] = -width/2;
-		vertices[4] = height/2;
-		vertices[5] = 0;
+		vertices[2] = -width/2;
+		vertices[3] = height/2;
+		vertices[4] = width/2;
+		vertices[5] = -height/2;
 		vertices[6] = width/2;
-		vertices[7] = height/2;
-		vertices[8] = 0;
-		vertices[9] = width/2;
-		vertices[10] = -height/2;
-		vertices[11] = 0;
+		vertices[7] = -height/2;
+		vertices[8] = -width/2;
+		vertices[9] = height/2;
+		vertices[10] = width/2;
+		vertices[11] = height/2;
 		
-		drawMode = GL2.GL_LINE_LOOP;
+		drawMode = GL2.GL_TRIANGLES;
 	}
 	
 	public static int floatToIntKey(float f)
