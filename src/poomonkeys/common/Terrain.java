@@ -17,11 +17,13 @@ public class Terrain extends Drawable
 	boolean needsUpdate;
 
 	GameEngine engine;
+	Renderer renderer;
 	private DirtGeometry lastDirtGeometry;
 
-	public Terrain(GameEngine e)
+	public Terrain(GameEngine e, Renderer r)
 	{
 		engine = e;
+		renderer = r;
 	}
 
 	public void addTankRandom(Tank tank)
@@ -60,7 +62,7 @@ public class Terrain extends Drawable
 			num_dirts = _generateDirtpointsRectangle(min_x, max_x, x, y, r);
 			totalDirtVolume = _collapseToRectangleBottom(min_index, max_index, x, y, r);
 			float individualDirtVolume = totalDirtVolume / num_dirts;
-			ArrayList<Movable[]> movables = engine.getMovables();
+			ArrayList<Movable[]> movables = renderer.getMovables();
 			Movable[] instances = movables.get(lastDirtGeometry.geometryID);
 			for (int d = 0; d < num_dirts; d++)
 			{
@@ -111,7 +113,7 @@ public class Terrain extends Drawable
 				float d = 0;
 				while (tCircleY + d <= top)
 				{
-					engine.addMovable(col_x, tCircleY + d, lastDirtGeometry);
+					renderer.addMovable(col_x, tCircleY + d, lastDirtGeometry);
 					d += DIRT_SIZE * 2 + gap;
 				}
 				count += top - tCircleY;
@@ -176,9 +178,9 @@ public class Terrain extends Drawable
 			
 			float individualDirtVolume = totalDirtVolume / num_dirts;
 
-			synchronized(GameEngine.movableLock)
+			synchronized(Renderer.movableLock)
 			{
-				ArrayList<Movable[]> movables = engine.getMovables();
+				ArrayList<Movable[]> movables = renderer.getMovables();
 				Movable[] instances = movables.get(lastDirtGeometry.geometryID);
 				for (int d = 0; d < num_dirts; d++)
 				{
@@ -231,7 +233,7 @@ public class Terrain extends Drawable
 				float d = 0;
 				while (tCircleY + d <= top)
 				{
-					engine.addMovable(col_x, tCircleY + d, lastDirtGeometry);
+					renderer.addMovable(col_x, tCircleY + d, lastDirtGeometry);
 					d += DIRT_SIZE * 2 + gap;
 					count++;
 				}

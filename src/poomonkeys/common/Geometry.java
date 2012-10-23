@@ -1,7 +1,5 @@
 package poomonkeys.common;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 
 /**
@@ -18,7 +16,6 @@ public class Geometry
 	public int drawMode;
 	
 	public boolean hasChanged = true;
-	public boolean needsCompile = false;
 
 	protected float width = 0;
 	protected float height = 0;
@@ -40,23 +37,6 @@ public class Geometry
 	
 	// subclasses are expected to override this method and put something in vertices 
 	public void buildGeometry(float viewWidth, float viewHeight) {}
-	
-	public void finalizeGeometry()
-	{
-		hasChanged = false;
-		
-		if(vertices == null) return;
-        
-        // initialize vertex Buffer (# of coordinate values * 4 bytes per float)  
-		ByteBuffer vbb = ByteBuffer.allocateDirect(vertices.length * Float.SIZE);
-		vbb.order(ByteOrder.nativeOrder());
-        vertexBuffer = vbb.asFloatBuffer();
-        // add the coordinates to the FloatBuffer
-        vertexBuffer.put(vertices);
-        vertexBuffer.rewind();
-        
-        needsCompile = true;
-	}
 
 	public int getNumPoints() 
 	{

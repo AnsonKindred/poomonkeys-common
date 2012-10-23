@@ -13,10 +13,12 @@ public class PhysicsController extends Thread
 	public ArrayList<float[]> pointForces = new ArrayList<float[]>();
 
 	GameEngine engine;
+	Renderer renderer;
 
-	public PhysicsController(GameEngine e)
+	public PhysicsController(GameEngine e, Renderer r)
 	{
 		engine = e;
+		renderer = r;
 
 		start();
 	}
@@ -50,14 +52,14 @@ public class PhysicsController extends Thread
 			synchronized (GameEngine.terrainLock)
 			{
 				Terrain terrain = engine.getTerrain();
-				synchronized (GameEngine.movableLock)
+				synchronized (Renderer.movableLock)
 				{
-					ArrayList<Movable[]> movables = engine.getMovables();
+					ArrayList<Movable[]> movables =  renderer.getMovables();
 					boolean missedSomeDirt = false;
 					for(int g = 0; g < movables.size(); g++)
 					{
 						Movable[] instances = movables.get(g);
-						Geometry geometry = engine.getGeometry(g);
+						Geometry geometry = renderer.getGeometry(g);
 						
 						for(int i = 0; i < geometry.num_instances; i++)
 						{
@@ -98,7 +100,7 @@ public class PhysicsController extends Thread
 	
 							if (iFromLeftX < 0 || iFromRightX >= terrain.points.length - 1)
 							{
-								engine.removeMovable(g, i);
+								renderer.removeMovable(g, i);
 								dirt_removed = true;
 							} 
 							else
@@ -200,14 +202,14 @@ public class PhysicsController extends Thread
 									// terrain
 									if (firstIntersection[2] == Float.MAX_VALUE)
 									{
-										engine.removeMovable(g, i);
-										System.out.println("Dirt fucking missed");
-										missedSomeDirt = true;
+										renderer.removeMovable(g, i);
+										//System.out.println("Dirt fucking missed");
+										//missedSomeDirt = true;
 									} 
 									else if (firstIntersection[2] != Float.MAX_VALUE)
 									{
 										addDirtToTerrain(firstIntersection, instance);
-										engine.removeMovable(g, i);
+										renderer.removeMovable(g, i);
 									}
 	
 									dirt_removed = true;
@@ -650,7 +652,7 @@ public class PhysicsController extends Thread
 
 	public void addDirtToTerrain(float[] intersect, Movable m)
 	{
-		synchronized(GameEngine.movableLock)
+		synchronized(Renderer.movableLock)
 		{
 			Terrain t = engine.getTerrain();
 	
