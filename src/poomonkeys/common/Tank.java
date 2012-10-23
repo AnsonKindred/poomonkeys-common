@@ -82,7 +82,7 @@ public class Tank extends Drawable
 			// attempt to fix error explained two lines above
 			if (intersect[0] - (index-1) * t.segmentWidth > t.segmentWidth - .001 && intersect[0] - (index-1) * t.segmentWidth < t.segmentWidth + .001)
 			{
-				index--;
+				//index--;
 				// removeFromPhysicsEngine = true;
 			}
 			index = Math.max(0, index);
@@ -154,19 +154,12 @@ public class Tank extends Drawable
 				this.v[0] = velocityVector * normalLX;
 				this.v[1] = velocityVector * normalLY;
 			}
-			//System.out.println("x" + this.v[0]);
-			//System.out.println(this.v[1]);
 
-			// this.v[0] = 0;
-			// this.v[1] = 0;
 		}
 	}
 
 	public void underTerrain(Terrain t)
 	{
-		// System.out.println("x" + this.v[0]);
-		// System.out.println(this.v[1]);
-		// System.out.println("underT");
 		float leftX = this.p[0] - width / 2;
 		float leftY = this.p[1] - height / 2;
 		float rightX = this.p[0] + width / 2;

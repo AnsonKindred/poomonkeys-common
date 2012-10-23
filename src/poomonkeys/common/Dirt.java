@@ -2,7 +2,6 @@ package poomonkeys.common;
 
 public class Dirt extends Drawable
 {
-	public float volume;
 	float min_index, max_index;
 	
 	public Dirt()

@@ -72,7 +72,7 @@ public class Drawable
 		if(geometry != null && geometry.hasChanged)
 		{
 			geometry.buildGeometry(viewWidth, viewHeight);
-			geometry.finalizeGeometry();
+			//geometry.finalizeGeometry();
 		}
 		for(int i=0; i < drawables.size(); i++) {
 			if(!drawables.get(i).didInit) {
@@ -92,7 +92,7 @@ public class Drawable
 		if(geometry != null)
 		{
 			geometry.buildGeometry(width, height);
-			geometry.finalizeGeometry();
+			//geometry.finalizeGeometry();
 		}
 	}
 
