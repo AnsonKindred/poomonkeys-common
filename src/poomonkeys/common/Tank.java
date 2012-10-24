@@ -43,13 +43,15 @@ public class Tank extends Drawable
 
 	public void intersectTerrain(Terrain t, float[] intersect)
 	{
-		if (intersect[2] > -.00001 && intersect[2] < .00001)
+		/*if (intersect[2] > -.00001 && intersect[2] < .00001)
 		{
-			//this.needsPositionUpdated = true;
-		}
+			this.needsPositionUpdated = true;
+			return;
+		}*/
 		
 		this.p[0] += this.v[0] * intersect[2];
 		this.p[1] += this.v[1] * intersect[2];
+		this.needsPositionUpdated = false;
 		System.out.println("t" + intersect[2]);
 		// removeFromPhysicsEngine = true;
 		float velocityVector = (float) Math.sqrt((this.v[0] * this.v[0]) + this.v[1] * this.v[1]);
@@ -68,12 +70,11 @@ public class Tank extends Drawable
 		float normalLY = vectorToLeftTerrainPointY / normalDistance;
 		this.v[0] = -velocityVector * normalLX;
 		this.v[1] = -velocityVector * normalLY;
-
 	}
 
 	public void underTerrain(Terrain t)
 	{
-		float leftX = this.p[0] - width / 2;
+		/*float leftX = this.p[0] - width / 2;
 		float leftY = this.p[1] - height / 2;
 		float rightX = this.p[0] + width / 2;
 		float rightY = this.p[1] - height / 2;
@@ -96,7 +97,7 @@ public class Tank extends Drawable
 		{
 			this.p[0] = leftX + width / 2 + 1f;
 			this.p[1] = lLandY + height / 2 + 1f;
-		}
+		}*/
 		// removeFromPhysicsEngine = true;
 	}
 

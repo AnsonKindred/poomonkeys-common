@@ -267,6 +267,7 @@ public class PhysicsController extends Thread
 						{
 							d.v[1] += GRAVITY;
 						}
+						d.isTouchingTerrain = false;
 						float next_x = d.p[0] + d.v[0];
 						float next_y = d.p[1] + d.v[1];
 
@@ -284,10 +285,10 @@ public class PhysicsController extends Thread
 							double landYatLeftX = terrain.points[iFromLeftX] + (terrain.points[iFromLeftX + 1] - terrain.points[iFromLeftX]) * leftPercent;
 							double landYatRightX = terrain.points[iFromRightX] + (terrain.points[iFromRightX + 1] - terrain.points[iFromRightX]) * rightPercent;
 
-							boolean leftIntersected = (next_y - d.height / 2) <= landYatLeftX;
-							boolean rightIntersected = (next_y - d.height / 2) <= landYatRightX;
-
-							if (leftIntersected || rightIntersected || d.width > 1)
+							boolean leftIntersected = (next_y - d.height / 2) <= (landYatLeftX+EPSILON);
+							boolean rightIntersected = (next_y - d.height / 2) <= (landYatRightX+EPSILON);
+							
+							if (leftIntersected || rightIntersected/* || d.width > 1*/)
 							{
 								int iFromPreviousLeftX = (int) ((d.p[0] - d.width / 2) / terrain.segmentWidth);
 								int left_min_index = iFromPreviousLeftX;
@@ -379,7 +380,6 @@ public class PhysicsController extends Thread
 									if (firstIntersection[2] == Float.MAX_VALUE)
 									{
 										d.isTouchingTerrain = true;
-										// d.needsPositionUpdated = false;
 										d.underTerrain(terrain);
 									}
 								} else
@@ -387,8 +387,8 @@ public class PhysicsController extends Thread
 									d.isTouchingTerrain = false;
 									d.aboveTerrain();
 								}
-
-								if (d.width > 1)
+								
+								/*if (d.width > 1)
 								{
 									for (int s = left_min_index; s <= right_max_index; s++)
 									{
@@ -410,12 +410,11 @@ public class PhysicsController extends Thread
 											}
 										}
 									}
-								}
+								}*/
 
 								if (firstIntersection[2] != Float.MAX_VALUE)
 								{
 									d.isTouchingTerrain = true;
-									d.needsPositionUpdated = false;
 									d.intersectTerrain(terrain, firstIntersection);
 								}
 							}

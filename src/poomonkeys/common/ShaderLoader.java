@@ -82,8 +82,16 @@ public class ShaderLoader
 	public static int compileProgram(GL2 gl, String shaderName)
 	{
 		// generate shader ids
-        int vertexShader   = gl.glCreateShader(GL2.GL_VERTEX_SHADER);
-        int fragmentShader = gl.glCreateShader(GL2.GL_FRAGMENT_SHADER);
+        int vertexShader, fragmentShader;
+		try 
+		{
+	        vertexShader   = gl.glCreateShader(GL2.GL_VERTEX_SHADER);
+	        fragmentShader = gl.glCreateShader(GL2.GL_FRAGMENT_SHADER);
+		}
+		catch(Exception e)
+		{
+			return -1;
+		}
         
         String vertexShaderCode   = "";
         String fragmentShaderCode = "";
