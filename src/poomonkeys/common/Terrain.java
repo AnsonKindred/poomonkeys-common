@@ -113,7 +113,7 @@ public class Terrain extends Drawable
 				float d = 0;
 				while (tCircleY + d <= top)
 				{
-					renderer.addMovable(col_x, tCircleY + d, lastDirtGeometry);
+					//renderer.addMovable(col_x, tCircleY + d, lastDirtGeometry);
 					d += DIRT_SIZE * 2 + gap;
 				}
 				count += top - tCircleY;
@@ -178,7 +178,7 @@ public class Terrain extends Drawable
 			
 			float individualDirtVolume = totalDirtVolume / num_dirts;
 
-			synchronized(Renderer.movableLock)
+			/*synchronized(Renderer.movableLock)
 			{
 				ArrayList<Movable[]> movables = renderer.getMovables();
 				Movable[] instances = movables.get(lastDirtGeometry.geometryID);
@@ -187,7 +187,7 @@ public class Terrain extends Drawable
 					int index = (lastDirtGeometry.num_instances - d - 1);
 					instances[index].volume = individualDirtVolume;
 				}
-			}
+			}*/
 		}
 	}
 
@@ -233,7 +233,7 @@ public class Terrain extends Drawable
 				float d = 0;
 				while (tCircleY + d <= top)
 				{
-					renderer.addMovable(col_x, tCircleY + d, lastDirtGeometry);
+					//renderer.addMovable(col_x, tCircleY + d, lastDirtGeometry);
 					d += DIRT_SIZE * 2 + gap;
 					count++;
 				}

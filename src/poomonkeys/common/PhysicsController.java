@@ -577,7 +577,7 @@ public class PhysicsController extends Thread
 				return false;
 			}
 		}
-
+		
 		// make sure the intersection lies on the line segment
 		result[0] = p1x + v1x * final_t;
 		result[1] = p1y + v1y * final_t;
@@ -635,15 +635,30 @@ public class PhysicsController extends Thread
 	{
 		float denom = -p2x + p3x;
 		float dif = -p2y + p3y;
+		
+		if((denom > -EPSILON && denom < EPSILON))
+		{
+			return 1;
+		}
 
 		// point moving vertically
 		if (v1x > -EPSILON && v1x < EPSILON)
 		{
+			float denom2 = (-v1y - (dif * lvx) / denom + lvy);
+			if(denom2 > -EPSILON && denom2 < EPSILON)
+			{
+				return 1;
+			}
 			return (p1y - p2y - (p1x * dif) / denom + (p2x * dif) / denom) / (-v1y - (dif * lvx) / denom + lvy);
 		}
 		// point moving non-vertically
 		else
 		{
+			float denom2 = ((dif * v1x) / denom - v1y - (dif * lvx) / denom + lvy);
+			if(denom2 > -EPSILON && denom2 < EPSILON)
+			{
+				return 1;
+			}
 			return (p1y - p2y - (p1x * dif) / denom + (p2x * dif) / denom) / ((dif * v1x) / denom - v1y - (dif * lvx) / denom + lvy);
 		}
 	}
