@@ -69,13 +69,11 @@ public class Drawable
 	{
 		buildGeometry(viewWidth, viewHeight);
 		finalizeGeometry();
-		if(geometry != null && geometry.hasChanged)
+		
+		for(int i=0; i < drawables.size(); i++) 
 		{
-			geometry.buildGeometry(viewWidth, viewHeight);
-			//geometry.finalizeGeometry();
-		}
-		for(int i=0; i < drawables.size(); i++) {
-			if(!drawables.get(i).didInit) {
+			if(!drawables.get(i).didInit) 
+			{
 				drawables.get(i).init(viewWidth, viewHeight);
 			}
 		}
@@ -87,14 +85,7 @@ public class Drawable
 		for(int i=0; i < drawables.size(); i++) drawables.get(i).dispose();
 	}
 	
-	public void reshape(float width, float height) 
-	{
-		if(geometry != null)
-		{
-			geometry.buildGeometry(width, height);
-			//geometry.finalizeGeometry();
-		}
-	}
+	public void reshape(float width, float height) {}
 
 	public Geometry getGeometry() 
 	{

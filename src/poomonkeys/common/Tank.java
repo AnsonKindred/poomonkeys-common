@@ -43,22 +43,16 @@ public class Tank extends Drawable
 
 	public void intersectTerrain(Terrain t, float[] intersect)
 	{
-		/*if (intersect[2] > -.00001 && intersect[2] < .00001)
-		{
-			this.needsPositionUpdated = true;
-			return;
-		}*/
-		
+		if(intersect[2] == 1) intersect[2] = 0;
 		this.p[0] += this.v[0] * intersect[2];
 		this.p[1] += this.v[1] * intersect[2];
 		this.needsPositionUpdated = false;
 		System.out.println("t" + intersect[2]);
-		// removeFromPhysicsEngine = true;
+		System.out.println(intersect[0] - p[0]);
+		System.out.println();
 		float velocityVector = (float) Math.sqrt((this.v[0] * this.v[0]) + this.v[1] * this.v[1]);
 		
-		int index = (int) (intersect[0] / t.segmentWidth);
-		index = Math.max(0, index);
-		index = Math.min(t.points.length - 2, index);
+		int index = (int) intersect[3];
 
 		float vectorToLeftTerrainPointX = index * t.segmentWidth - (index+1) * t.segmentWidth;
 		float vectorToLeftTerrainPointY = (t.points[index] + t.offsets[index]) -  (t.points[index+1] + t.offsets[index+1]);
@@ -68,8 +62,19 @@ public class Tank extends Drawable
 		
 		float normalLX = vectorToLeftTerrainPointX / normalDistance;
 		float normalLY = vectorToLeftTerrainPointY / normalDistance;
-		this.v[0] = -velocityVector * normalLX;
-		this.v[1] = -velocityVector * normalLY;
+		
+		if(this.v[0] > 0)
+		{
+			this.v[0] = -velocityVector * normalLX;
+			this.v[1] = -velocityVector * normalLY;
+		}
+		else
+		{
+			this.v[0] = velocityVector * normalLX;
+			this.v[1] = velocityVector * normalLY;
+		}
+		this.p[0] += this.v[0] * (1-intersect[2]);
+		this.p[1] += this.v[1] * (1-intersect[2]);
 	}
 
 	public void underTerrain(Terrain t)
