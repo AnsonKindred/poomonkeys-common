@@ -480,20 +480,14 @@ public class PhysicsController extends Thread
 	 * If the line segment isn't moving at all consider using
 	 * findCollision_pointAndLinesegment
 	 * 
-	 * @param p1
-	 *            point starting location
-	 * @param v1
-	 *            point velocity
-	 * @param p2
-	 *            first line segment end point starting location
-	 * @param v2
-	 *            first line segment end point velocity
-	 * @param p3
-	 *            second line segment end point starting location
-	 * @param v3
-	 *            second line segment end point velocity
+	 * @param p1 point starting location
+	 * @param v1 point velocity
+	 * @param p2 first line segment end point starting location
+	 * @param v2 first line segment end point velocity
+	 * @param p3 second line segment end point starting location
+	 * @param v3 second line segment end point velocity
 	 * 
-	 * @return an array of length 3 containing the x, y intersect point and time
+	 * @return an array of length 3 containing the (x, y) intersect point and time
 	 *         of intersection (in that order)
 	 */
 	public boolean findCollision(float p1x, float p1y, float v1x, float v1y, float p2x, float p2y, float v2x, float v2y, float p3x, float p3y, float v3x,
