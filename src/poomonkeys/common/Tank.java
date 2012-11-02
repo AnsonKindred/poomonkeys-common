@@ -44,12 +44,16 @@ public class Tank extends Drawable
 	public void intersectTerrain(Terrain t, float[] intersect)
 	{
 		if(intersect[2] == 1) intersect[2] = 0;
+		
 		this.p[0] += this.v[0] * intersect[2];
 		this.p[1] += this.v[1] * intersect[2];
+		
 		this.needsPositionUpdated = false;
+		
 		System.out.println("t" + intersect[2]);
 		System.out.println(intersect[0] - p[0]);
 		System.out.println();
+		
 		float velocityVector = (float) Math.sqrt((this.v[0] * this.v[0]) + this.v[1] * this.v[1]);
 		
 		int index = (int) intersect[3];
@@ -73,6 +77,7 @@ public class Tank extends Drawable
 			this.v[0] = velocityVector * normalLX;
 			this.v[1] = velocityVector * normalLY;
 		}
+		
 		this.p[0] += this.v[0] * (1-intersect[2]);
 		this.p[1] += this.v[1] * (1-intersect[2]);
 	}
