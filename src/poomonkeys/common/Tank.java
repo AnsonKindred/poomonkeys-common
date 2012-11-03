@@ -41,18 +41,14 @@ public class Tank extends Drawable
 		turret.p[1] = height / 2;
 	}
 
-	public void intersectTerrain(Terrain t, float[] intersect)
+	public void intersectTerrain(Terrain t, Collision intersect)
 	{
-		if(intersect[2] == 1) intersect[2] = 0;
-		this.p[0] += this.v[0] * intersect[2];
-		this.p[1] += this.v[1] * intersect[2];
-		this.needsPositionUpdated = false;
-		System.out.println("t" + intersect[2]);
-		System.out.println(intersect[0] - p[0]);
+		System.out.println("t" + intersect.t);
+		System.out.println(intersect.x - p[0]);
 		System.out.println();
 		float velocityVector = (float) Math.sqrt((this.v[0] * this.v[0]) + this.v[1] * this.v[1]);
 		
-		int index = (int) intersect[3];
+		int index = (int) intersect.lineSegmentIndex;
 
 		float vectorToLeftTerrainPointX = index * t.segmentWidth - (index+1) * t.segmentWidth;
 		float vectorToLeftTerrainPointY = (t.points[index] + t.offsets[index]) -  (t.points[index+1] + t.offsets[index+1]);
@@ -73,12 +69,11 @@ public class Tank extends Drawable
 			this.v[0] = velocityVector * normalLX;
 			this.v[1] = velocityVector * normalLY;
 		}
-		this.p[0] += this.v[0] * (1-intersect[2]);
-		this.p[1] += this.v[1] * (1-intersect[2]);
 	}
 
 	public void underTerrain(Terrain t)
 	{
+		System.exit(0);
 		/*float leftX = this.p[0] - width / 2;
 		float leftY = this.p[1] - height / 2;
 		float rightX = this.p[0] + width / 2;

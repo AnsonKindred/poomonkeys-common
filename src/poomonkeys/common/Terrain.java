@@ -39,7 +39,7 @@ public class Terrain extends Drawable
 		{
 			points[i] = average;
 		}
-		update();
+		update(1);
 		tank.p[1] = average + tank.height / 2;
 	}
 
@@ -279,13 +279,13 @@ public class Terrain extends Drawable
 		return dirtVolume;
 	}
 
-	public void update()
+	public void update(float t)
 	{
 		for (int i = 0; i < offsets.length; i++)
 		{
 			previousPoints[i] = points[i];
-			points[i] += offsets[i];
-			offsets[i] = 0;
+			points[i] += offsets[i]*t;
+			offsets[i] = offsets[i]*(1-t);
 		}
 
 		buildGeometry(width, height);

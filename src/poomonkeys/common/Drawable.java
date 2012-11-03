@@ -113,7 +113,7 @@ public class Drawable
         }
     }
 
-	public void intersectTerrain(Terrain t, float[] intersect) {}
+	public void intersectTerrain(Terrain t, Collision intersect) {}
 
 	public void underTerrain(Terrain t) 
 	{
