@@ -43,7 +43,7 @@ public class Tank extends Drawable
 
 	public void intersectTerrain(Terrain t, float[] intersect)
 	{
-		if(intersect[4] == 1)
+		if(intersect[4] == 3)
 		{
 			// middle intersection
 			if(intersect[2] == 1 || this.v[1] == 0)
@@ -68,15 +68,19 @@ public class Tank extends Drawable
 
 			this.needsPositionUpdated = false;
 		}
-		else
+		else 
 		{
-			// endpoint intersection
-			if(intersect[2] != 1 && intersect[2] >= .1)
+			float velocityMagnitude = (float) Math.sqrt((this.v[0] * this.v[0]) + this.v[1] * this.v[1]);
+			
+			if(intersect[4] == 1) // left point
 			{
-				this.p[0] += this.v[0] * intersect[2];
-				this.p[1] += this.v[1] * intersect[2];
-				System.out.println("correcting position to intersect point");
+				p[0] = (intersect[0] + width/2);
 			}
+			else // if(intersect[4] == 2) // right point
+			{
+				p[0] = intersect[0] - width/2;
+			}
+			p[1] = intersect[1] + height/2;
 			
 			this.needsPositionUpdated = false;
 			
@@ -84,7 +88,7 @@ public class Tank extends Drawable
 			System.out.println(intersect[0] - p[0]);
 			System.out.println();
 			
-			float velocityVector = (float) Math.sqrt((this.v[0] * this.v[0]) + this.v[1] * this.v[1]);
+			
 			
 			int index = (int) intersect[3];
 	
@@ -95,48 +99,24 @@ public class Tank extends Drawable
 					* vectorToLeftTerrainPointY);
 			
 			float normalLX = vectorToLeftTerrainPointX / normalDistance;
-			float normalLY = vectorToLeftTerrainPointY / normalDistance + .001f;
+			float normalLY = vectorToLeftTerrainPointY / normalDistance;
 			
 			if(this.v[0] > 0)
 			{
-				this.v[0] = -velocityVector * normalLX;
-				this.v[1] = -velocityVector * normalLY;
+				this.v[0] = -velocityMagnitude * normalLX - .001f*this.v[0];
+				this.v[1] = -velocityMagnitude * normalLY + Math.abs(.001f*this.v[1]);
 			}
 			else
 			{
-				this.v[0] = velocityVector * normalLX;
-				this.v[1] = velocityVector * normalLY;
-			}
-			
-	
-			// First set the position so that it is definitely outside the terrain
-			// right point intersected
-			float rightX = this.p[0] + this.width/2;
-			int rightPointTerrainIndex = (int)(rightX/t.segmentWidth);
-			float rightXPercent = (rightX % t.segmentWidth) / t.segmentWidth;
-			float rightYDif = t.points[rightPointTerrainIndex+1] - t.points[rightPointTerrainIndex];
-			float terrainYatRightPoint = t.points[rightPointTerrainIndex] + rightYDif*rightXPercent;
-			// left point intersected
-			float leftX = this.p[0] - this.width/2;
-			int leftPointTerrainIndex = (int)(leftX/t.segmentWidth);
-			float leftXPercent = (leftX % t.segmentWidth) / t.segmentWidth;
-			float leftYDif = t.points[leftPointTerrainIndex+1] - t.points[leftPointTerrainIndex];
-			float terrainYatLeftPoint = t.points[leftPointTerrainIndex] + leftYDif*leftXPercent;
-			if(terrainYatRightPoint > terrainYatLeftPoint)
-			{
-				this.p[1] = terrainYatRightPoint + this.height/2 + .005f;
-			}
-			else
-			{
-				this.p[1] = terrainYatLeftPoint + this.height/2 + .005f;
+				this.v[0] = velocityMagnitude * normalLX - .001f*this.v[0];
+				this.v[1] = velocityMagnitude * normalLY + Math.abs(.001f*this.v[1]);
 			}
 			
 			if(intersect[2] == 1)
 			{
-				
 				// Update position to slide along terrain, mmm sexy
-				this.p[0] += this.v[0] * intersect[2];
-				this.p[1] += this.v[1] * intersect[2];
+				this.p[0] += this.v[0];
+				this.p[1] += this.v[1];
 				System.out.println("slide");
 			}
 		}

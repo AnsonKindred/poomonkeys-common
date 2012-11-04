@@ -302,7 +302,7 @@ public class PhysicsController extends Thread
 							}
 							System.out.println("leftPointBeneathTerrain: " + leftPointBeneathTerrain);
 							System.out.println("rightPointBeneathTerrain: " + rightPointBeneathTerrain);
-							if (leftPointBeneathTerrain || rightPointBeneathTerrain || d.width > 1)
+							if (leftPointBeneathTerrain || rightPointBeneathTerrain/* || d.width > 1*/)
 							{
 								int iFromPreviousLeftX = (int) ((d.p[0] - d.width / 2) / terrain.segmentWidth);
 								int left_min_index = iFromPreviousLeftX;
@@ -364,13 +364,15 @@ public class PhysicsController extends Thread
 													firstIntersection[1] = lastIntersect[1];
 													firstIntersection[2] = lastIntersect[2];
 													firstIntersection[3] = s;
-													firstIntersection[4] = 0;
+													firstIntersection[4] = 1;
 												}
 											}
 										}
 										
 										if(!foundIntersection)
 										{
+											System.out.println("distance under land: " + (landYatLeftX - (next_y - d.height/2))); 
+											System.out.println("distance under land: " + (landYatRightX - (d.p[0] - d.height/2)));
 											System.exit(0);
 										}
 									}
@@ -404,12 +406,14 @@ public class PhysicsController extends Thread
 													firstIntersection[1] = lastIntersect[1];
 													firstIntersection[2] = lastIntersect[2];
 													firstIntersection[3] = s;
-													firstIntersection[4] = 0;
+													firstIntersection[4] = 2;
 												}
 											}
 										}
 										if(!foundIntersection)
 										{
+											System.out.println("distance under land: " + (landYatRightX - (next_y - d.height/2)));
+											System.out.println("distance under land: " + (landYatRightX - (d.p[0] - d.height/2)));
 											System.exit(0);
 										}
 									}
@@ -425,7 +429,7 @@ public class PhysicsController extends Thread
 									}
 								} 
 
-								System.out.println("Middle");
+								/*System.out.println("Middle");
 								if (d.width > 1)
 								{
 									for (int s = left_min_index; s <= right_max_index; s++)
@@ -447,11 +451,11 @@ public class PhysicsController extends Thread
 												firstIntersection[1] = lastIntersect[1];
 												firstIntersection[2] = lastIntersect[2];
 												firstIntersection[3] = s;
-												firstIntersection[4] = 1;
+												firstIntersection[4] = 3;
 											}
 										}
 									}
-								}
+								}*/
 
 								if (firstIntersection[2] != Float.MAX_VALUE)
 								{
@@ -670,7 +674,7 @@ public class PhysicsController extends Thread
 		
 		
 		// Check if lines are coincident
-		if(numeratorA > -EPSILON*100 && numeratorA < EPSILON*100 && numeratorB > -EPSILON*100 && numeratorB < EPSILON*100)
+		if(numeratorA > -EPSILON && numeratorA < EPSILON && numeratorB > -EPSILON && numeratorB < EPSILON)
 		{
 			System.out.println("Coincident: " + numeratorA + ", " + numeratorB + ", " + denom);
 			return 1;
