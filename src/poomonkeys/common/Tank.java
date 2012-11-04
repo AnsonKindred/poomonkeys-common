@@ -46,8 +46,11 @@ public class Tank extends Drawable
 		if(intersect[4] == 3)
 		{
 			// middle intersection
+			System.out.println("Checking velocity y");
+			isTouchingTerrain = true;
 			if(intersect[2] == 1 || this.v[1] == 0)
 			{
+				System.out.println("returning");
 				return;
 			}
 			this.p[0] += this.v[0] * intersect[2];
@@ -64,31 +67,29 @@ public class Tank extends Drawable
 				this.v[0] = -velocityMagnitude;
 			}
 			this.v[1] = 0;
-
-
+			System.out.println("velocityY zeroed");
 			this.needsPositionUpdated = false;
 		}
 		else 
 		{
 			float velocityMagnitude = (float) Math.sqrt((this.v[0] * this.v[0]) + this.v[1] * this.v[1]);
-			
-			if(intersect[4] == 1) // left point
+			if(intersect[2] != 1)
 			{
-				p[0] = (intersect[0] + width/2);
+				if(intersect[4] == 1) // left point
+				{
+					p[0] = (intersect[0] + width/2);
+				}
+				else // if(intersect[4] == 2) // right point
+				{
+					p[0] = intersect[0] - width/2;
+				}
+				p[1] = intersect[1] + height/2;
 			}
-			else // if(intersect[4] == 2) // right point
-			{
-				p[0] = intersect[0] - width/2;
-			}
-			p[1] = intersect[1] + height/2;
 			
 			this.needsPositionUpdated = false;
 			
 			System.out.println("t" + intersect[2]);
-			System.out.println(intersect[0] - p[0]);
 			System.out.println();
-			
-			
 			
 			int index = (int) intersect[3];
 	
@@ -103,13 +104,13 @@ public class Tank extends Drawable
 			
 			if(this.v[0] > 0)
 			{
-				this.v[0] = -velocityMagnitude * normalLX - .001f*this.v[0];
-				this.v[1] = -velocityMagnitude * normalLY + Math.abs(.001f*this.v[1]);
+				this.v[0] = -velocityMagnitude * normalLX - .01f*this.v[0];
+				this.v[1] = -velocityMagnitude * normalLY + Math.abs(.01f*this.v[1]);
 			}
 			else
 			{
-				this.v[0] = velocityMagnitude * normalLX - .001f*this.v[0];
-				this.v[1] = velocityMagnitude * normalLY + Math.abs(.001f*this.v[1]);
+				this.v[0] = velocityMagnitude * normalLX - .01f*this.v[0];
+				this.v[1] = velocityMagnitude * normalLY + Math.abs(.01f*this.v[1]);
 			}
 			
 			if(intersect[2] == 1)
