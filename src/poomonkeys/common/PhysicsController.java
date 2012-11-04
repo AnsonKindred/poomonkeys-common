@@ -673,7 +673,7 @@ public class PhysicsController extends Thread
 		
 		
 		// Check if lines are coincident
-		if(numeratorA > -EPSILON*10 && numeratorA < EPSILON*10 && numeratorB > -EPSILON*10 && numeratorB < EPSILON*10)
+		if(numeratorA > -EPSILON*100 && numeratorA < EPSILON*100 && numeratorB > -EPSILON*100 && numeratorB < EPSILON*100)
 		{
 			System.out.println("Coincident: " + numeratorA + ", " + numeratorB + ", " + denom);
 			return 1;

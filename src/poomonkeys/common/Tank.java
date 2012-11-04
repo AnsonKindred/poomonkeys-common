@@ -73,7 +73,7 @@ public class Tank extends Drawable
 		else 
 		{
 			float velocityMagnitude = (float) Math.sqrt((this.v[0] * this.v[0]) + this.v[1] * this.v[1]);
-			if(intersect[2] != 1)
+			if(intersect[2] != 1 && intersect[2] > .01)
 			{
 				if(intersect[4] == 1) // left point
 				{
@@ -104,13 +104,13 @@ public class Tank extends Drawable
 			
 			if(this.v[0] > 0)
 			{
-				this.v[0] = -velocityMagnitude * normalLX - .01f*this.v[0];
-				this.v[1] = -velocityMagnitude * normalLY + Math.abs(.01f*this.v[1]);
+				this.v[0] = -velocityMagnitude * normalLX - .005f*this.v[0];
+				this.v[1] = -velocityMagnitude * normalLY + Math.abs(.005f*this.v[1]);
 			}
 			else
 			{
-				this.v[0] = velocityMagnitude * normalLX - .01f*this.v[0];
-				this.v[1] = velocityMagnitude * normalLY + Math.abs(.01f*this.v[1]);
+				this.v[0] = velocityMagnitude * normalLX - .005f*this.v[0];
+				this.v[1] = velocityMagnitude * normalLY + Math.abs(.005f*this.v[1]);
 			}
 			
 			if(intersect[2] == 1)
