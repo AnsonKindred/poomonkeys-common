@@ -272,8 +272,8 @@ public class PhysicsController extends Thread
 						float next_x = d.p[0] + d.v[0];
 						float next_y = d.p[1] + d.v[1];
 
-						int iFromLeftX = (int) ((next_x - d.width/2 - EPSILON*100) / terrain.segmentWidth);
-						int iFromRightX = (int) ((next_x + d.width/2 + EPSILON*100) / terrain.segmentWidth);
+						int iFromLeftX = (int) ((next_x - d.width/2 - EPSILON) / terrain.segmentWidth);
+						int iFromRightX = (int) ((next_x + d.width/2 + EPSILON) / terrain.segmentWidth);
 
 						if (iFromLeftX < 0 || iFromRightX >= terrain.points.length - 1)
 						{
@@ -282,16 +282,27 @@ public class PhysicsController extends Thread
 						}
 						else
 						{
-							double leftPercent = ((next_x - d.width / 2 - EPSILON*100) % terrain.segmentWidth) / terrain.segmentWidth;
-							double rightPercent = ((next_x + d.width / 2 + EPSILON*100) % terrain.segmentWidth) / terrain.segmentWidth;
+							double leftPercent = ((next_x - d.width / 2 - EPSILON) % terrain.segmentWidth) / terrain.segmentWidth;
+							double rightPercent = ((next_x + d.width / 2 + EPSILON) % terrain.segmentWidth) / terrain.segmentWidth;
 							double landYatLeftX = terrain.points[iFromLeftX] + (terrain.points[iFromLeftX + 1] - terrain.points[iFromLeftX]) * leftPercent;
 							double landYatRightX = terrain.points[iFromRightX] + (terrain.points[iFromRightX + 1] - terrain.points[iFromRightX]) * rightPercent;
 
-							boolean leftPointBeneathTerrain = (next_y - d.height / 2) <= (landYatLeftX+EPSILON);
-							boolean rightPointBeneathTerrain = (next_y - d.height / 2) <= (landYatRightX+EPSILON);
+							boolean leftPointBeneathTerrain = (next_y - d.height / 2) <= (landYatLeftX);
+							boolean rightPointBeneathTerrain = (next_y - d.height / 2) <= (landYatRightX);
+							boolean leftPointTouchingTerrain = (next_y - d.height / 2) <= (landYatLeftX + EPSILON*1000);
+							boolean rightPointTouchingTerrain = (next_y - d.height / 2) <= (landYatRightX + EPSILON*1000);
+							if (leftPointTouchingTerrain || rightPointTouchingTerrain)
+							{
+								d.isTouchingTerrain = true;
+							}
+							else
+							{
+								d.isTouchingTerrain = false;
+								d.aboveTerrain();
+							}
 							System.out.println("leftPointBeneathTerrain: " + leftPointBeneathTerrain);
 							System.out.println("rightPointBeneathTerrain: " + rightPointBeneathTerrain);
-							if (leftPointBeneathTerrain || rightPointBeneathTerrain/* || d.width > 1*/)
+							if (leftPointBeneathTerrain || rightPointBeneathTerrain || d.width > 1)
 							{
 								int iFromPreviousLeftX = (int) ((d.p[0] - d.width / 2) / terrain.segmentWidth);
 								int left_min_index = iFromPreviousLeftX;
@@ -318,14 +329,15 @@ public class PhysicsController extends Thread
 									right_max_index = temp;
 								}
 								
-								float firstIntersection[] = new float[4];
+								float firstIntersection[] = new float[5];
 								firstIntersection[2] = Float.MAX_VALUE;
 
 								if (leftPointBeneathTerrain || rightPointBeneathTerrain)
 								{
-									System.out.println("Left");
 									if(leftPointBeneathTerrain)
 									{
+										System.out.println("Left");
+										boolean foundIntersection = false;
 										for (int s = left_min_index; s <= left_max_index; s++)
 										{
 											float xFromIndex = s * terrain.segmentWidth;
@@ -344,6 +356,7 @@ public class PhysicsController extends Thread
 													lastIntersect);
 											if (intersected)
 											{
+												foundIntersection = true;
 												System.out.println("Left point intersected");
 												if (lastIntersect[2] <= firstIntersection[2])
 												{
@@ -351,13 +364,20 @@ public class PhysicsController extends Thread
 													firstIntersection[1] = lastIntersect[1];
 													firstIntersection[2] = lastIntersect[2];
 													firstIntersection[3] = s;
+													firstIntersection[4] = 0;
 												}
 											}
 										}
+										
+										if(!foundIntersection)
+										{
+											System.exit(0);
+										}
 									}
-									System.out.println("Right");
 									if(rightPointBeneathTerrain)
 									{
+										System.out.println("Right");
+										boolean foundIntersection = false;
 										for (int s = right_min_index; s <= right_max_index; s++)
 										{
 											float xFromIndex = s * terrain.segmentWidth;
@@ -376,6 +396,7 @@ public class PhysicsController extends Thread
 													lastIntersect);
 											if (intersected)
 											{
+												foundIntersection = true;
 												System.out.println("Right point intersected");
 												if (lastIntersect[2] <= firstIntersection[2])
 												{
@@ -383,8 +404,13 @@ public class PhysicsController extends Thread
 													firstIntersection[1] = lastIntersect[1];
 													firstIntersection[2] = lastIntersect[2];
 													firstIntersection[3] = s;
+													firstIntersection[4] = 0;
 												}
 											}
+										}
+										if(!foundIntersection)
+										{
+											System.exit(0);
 										}
 									}
 									// Somehow a collision got missed, at least
@@ -393,12 +419,13 @@ public class PhysicsController extends Thread
 									if (firstIntersection[2] == Float.MAX_VALUE)
 									{
 										//System.out.println("Tank fucking missed");
+										System.exit(0);
 										d.isTouchingTerrain = true;
 										d.underTerrain(terrain);
 									}
 								} 
 
-								/*System.out.println("Middle");
+								System.out.println("Middle");
 								if (d.width > 1)
 								{
 									for (int s = left_min_index; s <= right_max_index; s++)
@@ -420,20 +447,16 @@ public class PhysicsController extends Thread
 												firstIntersection[1] = lastIntersect[1];
 												firstIntersection[2] = lastIntersect[2];
 												firstIntersection[3] = s;
+												firstIntersection[4] = 1;
 											}
 										}
 									}
-								}*/
+								}
 
 								if (firstIntersection[2] != Float.MAX_VALUE)
 								{
 									d.isTouchingTerrain = true;
 									d.intersectTerrain(terrain, firstIntersection);
-								}
-								else if (!leftPointBeneathTerrain && !rightPointBeneathTerrain) 
-								{
-									d.isTouchingTerrain = false;
-									d.aboveTerrain();
 								}
 							}
 						}
@@ -494,7 +517,7 @@ public class PhysicsController extends Thread
 			float v3y, float[] result)
 	{
 
-		float EPSILON_A = .002f;
+		float EPSILON_A = .05f;
 		double t[] = { -1f, -1f };
 
 		// Line segment points haven't moved, perform standard point / line
@@ -607,15 +630,19 @@ public class PhysicsController extends Thread
 		float s2x = p3x + v3x * final_t;
 		float s2y = p3y + v3y * final_t;
 		
-		if (!isBetween(result[0], s1x, s2x, EPSILON_A*10))
+		if (!isBetween(result[0], s1x, s2x, EPSILON_A/100))
 		{
+			System.out.println("x: " + result[0] + " s1x: " + s1x + " s2x: " + s2x);
 			return false;
 		}
-		if (!isBetween(result[1], s1y, s2y, EPSILON_A*10))
+		if (!isBetween(result[1], s1y, s2y, EPSILON_A/100))
 		{
+			System.out.println("y: " + result[1] + " s1y: " + s1y + " s2y: " + s2y);
 			return false;
 		}
 
+		System.out.println("x: " + result[0] + " s1x: " + s1x + " s2x: " + s2x);
+		System.out.println("y: " + result[1] + " s1y: " + s1y + " s2y: " + s2y);
 		return true;
 	}
 
@@ -643,20 +670,26 @@ public class PhysicsController extends Thread
 		
 		
 		// Check if lines are coincident
-		if(numeratorA > -EPSILON*10000 && numeratorA < EPSILON*10000 && numeratorB > -EPSILON*10000 && numeratorB < EPSILON*10000)
+		if(numeratorA > -EPSILON*100 && numeratorA < EPSILON*100 && numeratorB > -EPSILON*100 && numeratorB < EPSILON*100)
 		{
+			System.out.println("Coincident: " + numeratorA + ", " + numeratorB + ", " + denom);
 			return 1;
 		}
 		// Parallel but not coincident, no intersection 
 		else if(denom > -EPSILON && denom < EPSILON) 
 		{
-			System.out.println("Parallel: " + numeratorA + ", " + numeratorB);
+			System.out.println("Parallel: " + numeratorA + ", " + numeratorB + ", " + denom);
 			return -1;
 		}
 		else
 		{
 			float ua = numeratorA/denom;
 			float ub = numeratorB/denom;
+			System.out.println("numeratorA: " + numeratorA);
+			System.out.println("numeratorB: " + numeratorB);
+			System.out.println("UA: " + ua);
+			System.out.println("UB: " + ub);
+			System.out.println("denom: " + denom);
 			return ua;
 		}
 	}
@@ -666,7 +699,7 @@ public class PhysicsController extends Thread
 	{
 		float denom = -p2x + p3x;
 		float dif = -p2y + p3y;
-		
+		System.out.println("Denom: " + denom);
 		if((denom > -EPSILON && denom < EPSILON))
 		{
 			return 1;
@@ -677,6 +710,8 @@ public class PhysicsController extends Thread
 		if (v1x > -EPSILON && v1x < EPSILON)
 		{
 			float denom2 = (-v1y - (dif * lvx) / denom + lvy);
+
+			System.out.println("Denom2: " + denom2);
 			if(denom2 > -EPSILON && denom2 < EPSILON)
 			{
 				return 1;
@@ -687,6 +722,8 @@ public class PhysicsController extends Thread
 		else
 		{
 			float denom2 = ((dif * v1x) / denom - v1y - (dif * lvx) / denom + lvy);
+
+			System.out.println("Denom2: " + denom2);
 			if(denom2 > -EPSILON && denom2 < EPSILON)
 			{
 				return 1;
@@ -694,8 +731,7 @@ public class PhysicsController extends Thread
 			result = (p1y - p2y - (p1x * dif) / denom + (p2x * dif) / denom) / denom2;
 		}
 		
-		if(result < EPSILON) return 1;
-		else return result;
+		return result;
 	}
 
 	public void findCollision_pointAndLinesegmentWithIndependentlyMovingEndpoints(float p1x, float p1y, float v1x, float v1y, float p2x, float p2y, float v2x,
