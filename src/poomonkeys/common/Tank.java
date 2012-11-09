@@ -46,28 +46,12 @@ public class Tank extends Drawable
 	{
 		float velocityMagnitude = (float) Math.sqrt((this.v[0] * this.v[0]) + this.v[1] * this.v[1]);
 		float force = velocityMagnitude * m;
-//		if (force > 1)
-//		{
-//			float xDistance = (.01f * m * (this.v[0] * this.v[0]));
-//			float yDistance = (.01f * m * (this.v[1] * this.v[1]));
-//			if (this.v[0] < 0)
-//			{
-//				xDistance = -xDistance; 
-//			}
-//			if (this.v[1] < 0)
-//			{
-//				yDistance = -yDistance;
-//			}
-//			//this.p[0] += xDistance;
-//			//this.p[1] += yDistance;
-//			t.explodeRectangle(intersect[0] + xDistance, intersect[1] + yDistance, width / 2);
-//			// System.out.println("x" + this.v[0]);
-//			// System.out.println(this.v[1]);
-//			//removeFromPhysicsEngine = true;
-//		}
+		float oldVx = this.v[0];
+		float oldVy = this.v[1];
+		
 		// underTerrain(t);
-		//this.p[0] += this.v[0] * intersect[2];
-		//this.p[1] += this.v[1] * intersect[2];
+		// this.p[0] += this.v[0] * intersect[2];
+		// this.p[1] += this.v[1] * intersect[2];
 		if (intersect[4] == 3)
 		{
 			// middle intersection
@@ -89,7 +73,7 @@ public class Tank extends Drawable
 		{
 			this.needsPositionUpdated = false;
 			int index = (int) intersect[3];
-			//float velocityMagnitude = (float) Math.sqrt((this.v[0] * this.v[0]) + this.v[1] * this.v[1]);
+			// float velocityMagnitude = (float) Math.sqrt((this.v[0] * this.v[0]) + this.v[1] * this.v[1]);
 			float vectorToLeftTerrainPointX = index * t.segmentWidth - intersect[0];
 			float vectorToLeftTerrainPointY = (t.points[index] + t.offsets[index]) - intersect[1];
 			float vectorToLeftTerrainPointMagnitude = (float) Math.sqrt(vectorToLeftTerrainPointX * vectorToLeftTerrainPointX + vectorToLeftTerrainPointY
@@ -195,6 +179,26 @@ public class Tank extends Drawable
 				this.p[1] += this.v[1];
 				System.out.println("slide");
 			}
+		}
+		if (force > .02)
+		{
+			//up to the right and down to the left are the weird happening directions
+			float xDistance = (.01f * m * (this.v[0] * this.v[0]));
+			float yDistance = (.01f * m * (this.v[1] * this.v[1]));
+			if (oldVx < 0)
+			{
+				t.explodeRhombus(intersect[0] + oldVx * 5, intersect[1] + oldVy * 5, intersect[0], intersect[1], height);
+			}
+			if (oldVx >= 0)
+			{
+				t.explodeRhombus(intersect[0], intersect[1], intersect[0] + oldVx * 5, intersect[1] + oldVy * 5, height);
+			}
+			// this.p[0] += xDistance;
+			// this.p[1] += yDistance;
+			
+			// System.out.println("x" + this.v[0]);
+			// System.out.println(this.v[1]);
+			// removeFromPhysicsEngine = true;
 		}
 		System.out.println("Vx" + this.v[0]);
 		System.out.println("Vy" + this.v[1]);
