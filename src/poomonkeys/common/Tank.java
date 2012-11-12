@@ -188,13 +188,21 @@ public class Tank extends Drawable
 			//up to the right and down to the left are the weird happening directions
 			float xDistance = (.01f * m * (this.v[0] * this.v[0]));
 			float yDistance = (.01f * m * (this.v[1] * this.v[1]));
-			if (oldVx < 0)
+			if (oldVx < 0 && oldVy >= 0)
 			{
 				t.explodeRhombus(intersect[0] + oldVx * 5, intersect[1] + oldVy * 5, intersect[0], intersect[1], height);
 			}
-			if (oldVx >= 0)
+			if (oldVx < 0 && oldVy < 0)
+			{
+				t.explodeRhombus((this.p[0] + width / 2) + oldVx * 5, (this.p[1] - height / 2) + oldVy * 5, this.p[0] + width / 2, this.p[1] - height / 2 , height);
+			}
+			if (oldVx >= 0 && oldVy >= 0)
 			{
 				t.explodeRhombus(intersect[0], intersect[1], intersect[0] + oldVx * 5, intersect[1] + oldVy * 5, height);
+			}
+			if (oldVx >= 0 && oldVy < 0)
+			{
+				t.explodeRhombus(this.p[0] - width / 2, this.p[1] - height / 2, (this.p[0] - width / 2) + oldVx * 5, (this.p[1] - height / 2) + oldVy * 5 , height);
 			}
 			// this.p[0] += xDistance;
 			// this.p[1] += yDistance;
