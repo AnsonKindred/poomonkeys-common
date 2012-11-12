@@ -82,7 +82,7 @@ public class Terrain extends Drawable
 		}
 	}
 	
-	private int _generateDirtpointsRhombus(float min_x, float max_x, float leftX, float leftY, float rightX, float rightY, float height)
+	private int _generateDirtpointsRhombus(float min_x, float max_x, float leftX, float leftY, float rightX, float rightY, float height2)
 	{
 		float explosion_width = Math.abs(max_x - min_x);
 		int num_dirt_columns = (int) ((explosion_width + segmentWidth) / (2 * DIRT_SIZE));
@@ -92,22 +92,18 @@ public class Terrain extends Drawable
 		float end_x = max_x + segmentWidth / 2 - DIRT_SIZE - gap / 2;
 		float EPSILON = .0001f;
 		int count = 0;
-		
 		lastDirtGeometry = DirtGeometry.getInstance(DIRT_SIZE * 2 + gap);
-		
 		for (; col_x <= end_x + EPSILON; col_x += DIRT_SIZE * 2 + gap)
 		{
 			int min_index = Math.max(0, (int) (leftX / segmentWidth) + 1);
-			float thing = leftY + (col_x * segmentWidth - min_x) * ((rightY - leftY) / (rightX - leftX));// (float) (r * r - Math.pow(col_x - x, 2));
+			float thing = leftY + (col_x - min_x) * ((rightY - leftY) / (rightX - leftX));// (float) (r * r - Math.pow(col_x - x, 2));
 			float offset = 0;
-			// if (thing > 0)
-			// {
-			// offset = (float) Math.sqrt(thing);
-			// } else
-			// {
-			// offset = 0;
-			// }
-			float tCircleY = thing + height;
+//			 if (thing < 0)
+//			 {
+//			 thing = 0;
+//			 }
+
+			float tCircleY = thing;// + height2;
 			
 			int iFromX = (int) (col_x / segmentWidth);
 			if (iFromX < 0 || iFromX >= points.length - 1)
@@ -176,7 +172,7 @@ public class Terrain extends Drawable
 		// The min and max terrain index that lies within the explosion radius
 		int min_index = Math.max(0, (int) ((x - r) / segmentWidth) + 1);
 		int max_index = Math.min(NUM_POINTS - 1, (int) ((x + r) / segmentWidth));
-		
+		System.out.println("leftY");
 		// The actual x value at the min and max indexes
 		float min_x = (min_index) * segmentWidth;
 		float max_x = (max_index) * segmentWidth;

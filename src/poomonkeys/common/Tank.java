@@ -122,9 +122,10 @@ public class Tank extends Drawable
 				this.v[1] = (resultingNormalVectorY + resultingLandVectorY) * .3f;
 				System.out.println("!!!" + this.v[1]);
 			}
+			//if angle is 90 degrees / perpendicular to the land
 			if (angle < Math.PI / 2 + EPSILON && angle > Math.PI / 2 - EPSILON)
 			{
-				this.v[0] = this.v[0] * .3f;
+				this.v[0] = -this.v[0] * .3f;
 				this.v[1] = -this.v[1] * .3f;
 				System.out.println("90degrees");
 			}
@@ -151,6 +152,8 @@ public class Tank extends Drawable
 			// + 1) * t.segmentWidth;
 			// float vectorToLeftTerrainPointY = (t.points[index] +
 			// t.offsets[index]) - (t.points[index + 1] + t.offsets[index + 1]);
+			
+			// if angle is close enough to parallel to start sliding
 			if (angle >= (Math.PI - Math.PI / 2 / 9) + EPSILON || angle <= (Math.PI / 2 / 9) - EPSILON)
 			{
 				float normalDistance = (float) Math.sqrt(vectorToLeftTerrainPointX * vectorToLeftTerrainPointX + vectorToLeftTerrainPointY
