@@ -12,7 +12,7 @@ public class Tank extends Drawable
 	float acceleration = 0;
 	float groundSpeed = 5;
 	float baseGeometry[];
-	float EPSILON = .1f; // .07 to .1
+	float EPSILON = .1f; // could be .07 to .1, too small and the perpendicular angle makes funky happen
 	
 	public Drawable turret = new Drawable();
 	float turretLength = 1;
@@ -45,13 +45,19 @@ public class Tank extends Drawable
 	public void intersectTerrain(Terrain t, float[] intersect)
 	{
 		float velocityMagnitude = (float) Math.sqrt((this.v[0] * this.v[0]) + this.v[1] * this.v[1]);
-		float force = velocityMagnitude * m;
+		float force = velocityMagnitude * m; //think about switching to impulse
 		float oldVx = this.v[0];
 		float oldVy = this.v[1];
 		
 		// underTerrain(t);
 		// this.p[0] += this.v[0] * intersect[2];
 		// this.p[1] += this.v[1] * intersect[2];
+		if (velocityMagnitude < .1)
+		{
+			this.v[0] = 0;
+			this.v[1] = 0;
+			return;
+		}
 		if (intersect[4] == 3)
 		{
 			// middle intersection
@@ -183,9 +189,9 @@ public class Tank extends Drawable
 				System.out.println("slide");
 			}
 		}
+		//if force is sufficient, create dirt and collapse dirt as if the monkey has penetrated the land
 		if (force > .02)
 		{
-			//up to the right and down to the left are the weird happening directions
 			float xDistance = (.01f * m * (this.v[0] * this.v[0]));
 			float yDistance = (.01f * m * (this.v[1] * this.v[1]));
 			if (oldVx < 0 && oldVy >= 0)
@@ -194,7 +200,8 @@ public class Tank extends Drawable
 			}
 			if (oldVx < 0 && oldVy < 0)
 			{
-				t.explodeRhombus((this.p[0] + width / 2) + oldVx * 5, (this.p[1] - height / 2) + oldVy * 5, this.p[0] + width / 2, this.p[1] - height / 2 , height);
+				t.explodeRhombus((this.p[0] + width / 2) + oldVx * 5, (this.p[1] - height / 2) + oldVy * 5, this.p[0] + width / 2, this.p[1] - height / 2, height);
+				t.explodeRhombus((this.p[0] - width / 2) + oldVx * 5, (this.p[1] - height / 2) + oldVy * 5, (this.p[0] + width / 2) + oldVx * 5, (this.p[1] - height / 2) + oldVy * 5, height);
 			}
 			if (oldVx >= 0 && oldVy >= 0)
 			{
@@ -203,6 +210,7 @@ public class Tank extends Drawable
 			if (oldVx >= 0 && oldVy < 0)
 			{
 				t.explodeRhombus(this.p[0] - width / 2, this.p[1] - height / 2, (this.p[0] - width / 2) + oldVx * 5, (this.p[1] - height / 2) + oldVy * 5 , height);
+				t.explodeRhombus((this.p[0] - width / 2) + oldVx * 5, (this.p[1] - height / 2) + oldVy * 5 , (this.p[0] + width / 2) + oldVx * 5, (this.p[1] - height / 2) + oldVy * 5 , height);
 			}
 			// this.p[0] += xDistance;
 			// this.p[1] += yDistance;

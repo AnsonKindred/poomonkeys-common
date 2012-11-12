@@ -44,7 +44,7 @@ public class Terrain extends Drawable
 	}
 	
 	// left and right points of a sloped quadrilateral where the top and bottom are parallel in the same slope
-	// and the left and right are vertical
+	// and the left and right are vertical, not really an "explosion" just terrain being adjusted and dirt points being generated
 	public void explodeRhombus(float leftX, float leftY, float rightX, float rightY, float height)
 	{
 		// The min and max terrain index that lies within the explosion radius
@@ -98,12 +98,12 @@ public class Terrain extends Drawable
 			int min_index = Math.max(0, (int) (leftX / segmentWidth) + 1);
 			float thing = leftY + (col_x - min_x) * ((rightY - leftY) / (rightX - leftX));// (float) (r * r - Math.pow(col_x - x, 2));
 			float offset = 0;
-//			 if (thing < 0)
-//			 {
-//			 thing = 0;
-//			 }
-
-			float tCircleY = thing;// + height2;
+			// if (thing < 0)
+			// {
+			// thing = 0;
+			// }
+			
+			float tCircleY = thing + height2;
 			
 			int iFromX = (int) (col_x / segmentWidth);
 			if (iFromX < 0 || iFromX >= points.length - 1)
